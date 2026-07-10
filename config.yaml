@@ -1,0 +1,79 @@
+# Job Hunter configuration.
+# Edit these to match what you're looking for. All fields have sensible defaults.
+
+# Search terms sent to each source (one query per term).
+queries:
+  - "data scientist"
+  - "machine learning engineer"
+  - "AI engineer"
+  - "NLP engineer"
+  - "data analyst"
+
+# Preferred locations. Used as Adzuna 'where' filter and as a location-match boost.
+# "Remote" is treated specially (matches remote-flagged / remote-mentioning jobs).
+locations:
+  - "Stockholm"
+  - "Uppsala"
+  - "Remote"
+
+# How the final 0-100 score blends the three signals. Weights are renormalized
+# automatically if a signal is unavailable (e.g. no CV yet, or no trained model).
+blend:
+  keyword: 0.4     # hand-tuned keyword rules below
+  semantic: 0.4    # TF-IDF cosine similarity of the job to your cv.md
+  relevance: 0.2   # trained relevance classifier probability (after you label some jobs)
+
+ranking:
+  # Terms that raise the keyword score (weight added; title matches count double).
+  positive:
+    # Seniority: bias toward entry-level / junior roles.
+    junior: 15
+    "entry level": 15
+    graduate: 12
+    nyexaminerad: 12   # Swedish: "newly graduated"
+    trainee: 8
+    # Skills / tools you value.
+    python: 15
+    "machine learning": 12
+    "deep learning": 10
+    AI: 10
+    pytorch: 8
+    mlops: 8
+    nlp: 8
+    remote: 6
+  # Terms that lower the keyword score (weight subtracted).
+  # (senior/lead moved to excluded_titles; consultant/consulting moved to
+  #  excluded below since you want them dropped entirely.)
+  negative:
+    php: 20
+    ".net": 15
+  # If non-empty, a job must contain at least one of these to survive.
+  required: []
+  # A job is dropped if any of these appear in the title, description, OR company
+  # name. (So "consulting" here drops consultancy firms too.)
+  excluded:
+    - internship
+    - praktik        # Swedish for "internship"
+    - consultant
+    - consulting
+  # Keep only ads that read as English (drop Swedish-language ads).
+  english_only: true
+  # A job is dropped if any of these appear in its TITLE (level filtering).
+  excluded_titles:
+    - senior
+    - lead
+    - principal
+    - staff
+    - "head of"
+    - erfaren        # Swedish: "experienced"
+  # Linear recency boost applied within this many days of posting.
+  recency_days: 30
+  # Boost applied to remote roles.
+  remote_boost: 10
+
+# Per-source limits.
+sources:
+  platsbanken:
+    limit: 100       # results per query (max 100 per JobTech request)
+  adzuna:
+    max_pages: 2     # 50 results per page

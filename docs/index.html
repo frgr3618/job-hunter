@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Job Hunter — matches</title>
+  <style>
+    :root {
+      --bg: #f7f8fa; --panel: #ffffff; --text: #1a1d21; --muted: #666e7a;
+      --border: #e3e6ea; --accent: #2f6df6; --new: #0a8f5b; --new-bg: #e3f6ec;
+      --up: #0a8f5b; --down: #d64545; --shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #14171c; --panel: #1c2027; --text: #e6e9ee; --muted: #98a1ad;
+        --border: #2b313a; --accent: #5b8bff; --new: #35d08a; --new-bg: #123626;
+        --up: #35d08a; --down: #f2726f; --shadow: 0 1px 3px rgba(0,0,0,.3);
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+    header {
+      padding: 20px 24px; border-bottom: 1px solid var(--border);
+      background: var(--panel); position: sticky; top: 0; z-index: 5;
+    }
+    h1 { margin: 0 0 4px; font-size: 20px; }
+    .meta { color: var(--muted); font-size: 13px; }
+    .controls {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      margin-top: 14px;
+    }
+    input[type=search], select {
+      padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+      background: var(--bg); color: var(--text); font-size: 14px;
+    }
+    input[type=search] { flex: 1; min-width: 180px; }
+    label.toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
+    button {
+      padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;
+      background: var(--bg); color: var(--text); font-size: 14px; cursor: pointer;
+    }
+    button:hover { border-color: var(--accent); }
+    main { padding: 16px 24px 60px; }
+    .wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); }
+    table { width: 100%; border-collapse: collapse; background: var(--panel); }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { position: sticky; top: 0; background: var(--panel); cursor: pointer; user-select: none; white-space: nowrap; font-size: 13px; color: var(--muted); }
+    th.sorted::after { content: attr(data-arrow); margin-left: 4px; color: var(--accent); }
+    tr:last-child td { border-bottom: none; }
+    .score { font-weight: 700; font-variant-numeric: tabular-nums; cursor: help; }
+    .title a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .title a:hover { text-decoration: underline; }
+    .company, .loc { color: var(--text); }
+    .posted, .src { color: var(--muted); font-size: 13px; white-space: nowrap; }
+    .badge-new {
+      display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 999px;
+      font-size: 11px; font-weight: 700; color: var(--new); background: var(--new-bg);
+      vertical-align: middle;
+    }
+    .fb { display: inline-flex; gap: 4px; }
+    .fb button { padding: 4px 8px; font-size: 15px; line-height: 1; }
+    .fb button.up.active { background: var(--up); border-color: var(--up); color: #fff; }
+    .fb button.down.active { background: var(--down); border-color: var(--down); color: #fff; }
+    .empty { padding: 40px; text-align: center; color: var(--muted); }
+    .count { font-size: 13px; color: var(--muted); margin: 10px 2px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Job Hunter</h1>
+    <div class="meta" id="meta">Loading…</div>
+    <div class="controls">
+      <input type="search" id="q" placeholder="Filter by title, company, location…" aria-label="Filter jobs" />
+      <select id="source" aria-label="Filter by source"><option value="">All sources</option></select>
+      <label class="toggle"><input type="checkbox" id="newonly" /> New only</label>
+      <button id="export" title="Download your 👍/👎 as a CSV to commit for training">Export feedback</button>
+    </div>
+  </header>
+  <main>
+    <div class="count" id="count"></div>
+    <div class="wrap">
+      <table id="table">
+        <thead>
+          <tr>
+            <th data-key="score" data-num="1">Score</th>
+            <th data-key="title">Title</th>
+            <th data-key="company">Company</th>
+            <th data-key="location">Location</th>
+            <th data-key="source">Source</th>
+            <th data-key="posted_at">Posted</th>
+            <th>Fit</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty" hidden>No jobs match your filters.</div>
+  </main>
+
+  <script>
+    const FB_PREFIX = "jobfb:";          // localStorage key prefix for feedback
+    let jobs = [];                        // all jobs from jobs.json
+    let sort = { key: "score", dir: -1 }; // current sort (dir: 1 asc, -1 desc)
+
+    const $ = (id) => document.getElementById(id);
+
+    function fbGet(key) { return localStorage.getItem(FB_PREFIX + key); }
+    function fbSet(key, label) {
+      const cur = fbGet(key);
+      if (cur === label) localStorage.removeItem(FB_PREFIX + key); // toggle off
+      else localStorage.setItem(FB_PREFIX + key, label);
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return "—";
+      const d = new Date(iso);
+      return isNaN(d) ? "—" : d.toISOString().slice(0, 10);
+    }
+
+    function passesFilters(job) {
+      const q = $("q").value.trim().toLowerCase();
+      if ($("newonly").checked && !job.is_new) return false;
+      if ($("source").value && job.source !== $("source").value) return false;
+      if (q) {
+        const hay = `${job.title} ${job.company} ${job.location}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    }
+
+    function sortJobs(list) {
+      const { key, dir } = sort;
+      return [...list].sort((a, b) => {
+        let av = a[key], bv = b[key];
+        if (key === "posted_at") { av = av || ""; bv = bv || ""; }
+        if (typeof av === "string") { av = av.toLowerCase(); bv = (bv || "").toLowerCase(); }
+        if (av < bv) return -dir;
+        if (av > bv) return dir;
+        return 0;
+      });
+    }
+
+    function render() {
+      const tbody = $("tbody");
+      tbody.innerHTML = "";
+      const filtered = jobs.filter(passesFilters);
+      const rows = sortJobs(filtered);
+      $("empty").hidden = rows.length > 0;
+      $("count").textContent = `${rows.length} of ${jobs.length} jobs`;
+
+      for (const job of rows) {
+        const tr = document.createElement("tr");
+        const reasons = (job.score_reasons || []).join(" · ") || "no scoring reasons";
+        const label = fbGet(job.job_key);
+        tr.innerHTML = `
+          <td><span class="score" title="${escapeHtml(reasons)}">${Math.round(job.score)}</span></td>
+          <td class="title"><a href="${escapeAttr(job.url)}" target="_blank" rel="noopener">${escapeHtml(job.title)}</a>${job.is_new ? '<span class="badge-new">NEW</span>' : ""}</td>
+          <td class="company">${escapeHtml(job.company)}</td>
+          <td class="loc">${escapeHtml(job.location) || "—"}</td>
+          <td class="src">${escapeHtml(job.source)}</td>
+          <td class="posted">${fmtDate(job.posted_at)}</td>
+          <td>
+            <span class="fb" data-key="${escapeAttr(job.job_key)}">
+              <button class="up ${label === "1" ? "active" : ""}" title="Good match" aria-label="Thumbs up">👍</button>
+              <button class="down ${label === "0" ? "active" : ""}" title="Not a match" aria-label="Thumbs down">👎</button>
+            </span>
+          </td>`;
+        tbody.appendChild(tr);
+      }
+    }
+
+    // Feedback clicks (event delegation).
+    $("tbody").addEventListener("click", (e) => {
+      const btn = e.target.closest(".fb button");
+      if (!btn) return;
+      const key = btn.parentElement.dataset.key;
+      fbSet(key, btn.classList.contains("up") ? "1" : "0");
+      render();
+    });
+
+    // Header sorting.
+    document.querySelectorAll("th[data-key]").forEach((th) => {
+      th.addEventListener("click", () => {
+        const key = th.dataset.key;
+        if (sort.key === key) sort.dir *= -1;
+        else sort = { key, dir: th.dataset.num ? -1 : 1 };
+        document.querySelectorAll("th").forEach((h) => { h.classList.remove("sorted"); h.removeAttribute("data-arrow"); });
+        th.classList.add("sorted");
+        th.setAttribute("data-arrow", sort.dir === 1 ? "▲" : "▼");
+        render();
+      });
+    });
+
+    ["q", "source", "newonly"].forEach((id) => $(id).addEventListener("input", render));
+
+    // Export feedback as CSV to commit into docs/data/feedback.csv.
+    $("export").addEventListener("click", () => {
+      const rows = [["job_key", "label"]];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k.startsWith(FB_PREFIX)) rows.push([k.slice(FB_PREFIX.length), localStorage.getItem(k)]);
+      }
+      if (rows.length === 1) { alert("No feedback yet — click 👍/👎 on some jobs first."); return; }
+      const csv = rows.map((r) => r.map(csvCell).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "feedback.csv";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    function csvCell(s) { return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }
+    function escapeHtml(s) { return String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+    function escapeAttr(s) { return String(s ?? "").replace(/["'&<>]/g, (c) => ({ '"': "&quot;", "'": "&#39;", "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+
+    // Load data.
+    fetch("./data/jobs.json")
+      .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then((data) => {
+        jobs = data.jobs || [];
+        $("meta").textContent = `${data.count ?? jobs.length} jobs · updated ${fmtDate(data.generated_at)}`;
+        const sources = [...new Set(jobs.map((j) => j.source))].sort();
+        for (const s of sources) {
+          const opt = document.createElement("option");
+          opt.value = opt.textContent = s;
+          $("source").appendChild(opt);
+        }
+        render();
+      })
+      .catch((err) => {
+        $("meta").textContent = "Could not load data/jobs.json — run `job-hunter run` first.";
+        console.error(err);
+      });
+  </script>
+</body>
+</html>
