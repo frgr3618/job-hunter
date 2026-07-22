@@ -9,15 +9,16 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from .config import ApiKeys, Config
 from .dedupe import dedupe, load_seen, mark_new
+from .models import Job
 from .rank import rank
 from .recommender import add_semantic_scores, load_cv
 from .report import SEEN_PATH, write_jobs, write_seen
 from .sources import SOURCES
-from .models import Job
+from .sources.base import Source
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ def run(
     deduped = dedupe(raw)
     log.info("deduped %d -> %d", len(raw), len(deduped))
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     seen = load_seen(SEEN_PATH)
     updated_seen = mark_new(deduped, seen, today)
 
@@ -62,14 +63,14 @@ def run(
     log.info("ranked %d jobs (after filters)", len(ranked))
 
     if not dry_run:
-        write_jobs(ranked, generated_at=datetime.now(timezone.utc))
+        write_jobs(ranked, generated_at=datetime.now(UTC))
         write_seen(updated_seen)
         log.info("wrote docs/data/jobs.json and seen.json")
 
     return RunResult(jobs=ranked, fetched=len(raw), per_source=per_source)
 
 
-def _select_sources(source_names: list[str] | None):
+def _select_sources(source_names: list[str] | None) -> list[Source]:
     """Pick sources by name (or all of them if none specified)."""
     if not source_names:
         return list(SOURCES.values())

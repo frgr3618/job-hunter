@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import bisect
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import lru_cache
 
 from .config import Blend, Config
@@ -135,9 +135,11 @@ def _is_excluded(job: Job, config: Config) -> bool:
         return True
     if any(_contains(term, haystack) for term in ranking.excluded):
         return True
-    if ranking.required and not any(_contains(term, haystack) for term in ranking.required):
-        return True
-    return False
+    # Drop when required terms are configured but none is present.
+    # bool(...) keeps the return type a plain bool (an empty list is falsy but not False).
+    return bool(ranking.required) and not any(
+        _contains(term, haystack) for term in ranking.required
+    )
 
 
 def _keyword_score(job: Job, config: Config) -> float:
@@ -185,10 +187,10 @@ def _recency_boost(job: Job, recency_days: int) -> float:
     """Full RECENCY_MAX for a brand-new post, fading to 0 at `recency_days`."""
     if job.posted_at is None or recency_days <= 0:
         return 0.0
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     posted = job.posted_at
     if posted.tzinfo is None:  # treat naive timestamps as UTC
-        posted = posted.replace(tzinfo=timezone.utc)
+        posted = posted.replace(tzinfo=UTC)
     age_days = (now - posted).total_seconds() / 86400
     if age_days < 0 or age_days > recency_days:
         return 0.0

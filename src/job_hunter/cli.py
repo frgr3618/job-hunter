@@ -10,7 +10,8 @@ import argparse
 import logging
 
 from .config import ApiKeys, Config
-from .pipeline import RunResult, run as run_pipeline
+from .pipeline import RunResult
+from .pipeline import run as run_pipeline
 
 
 def main(argv: list[str] | None = None) -> int:

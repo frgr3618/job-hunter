@@ -1,0 +1,32 @@
+name: CI
+
+# Runs the quality gate (lint + type-check) on every push and pull request,
+# so broken or messy code is caught before it reaches the main branch.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install project + dev tools
+        run: pip install -e ".[dev]"
+
+      - name: Ruff (lint)
+        run: ruff check src/
+
+      - name: Mypy (type-check)
+        run: mypy
+
+      # Tests come next: uncomment once a tests/ directory exists.
+      # - name: Pytest
+      #   run: pytest

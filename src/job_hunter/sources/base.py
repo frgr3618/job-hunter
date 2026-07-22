@@ -63,7 +63,8 @@ def get_json(
                 time.sleep(wait)
                 continue
             response.raise_for_status()  # raise on other 4xx (e.g. bad request)
-            return response.json()
+            data: dict[str, Any] = response.json()
+            return data
         except (httpx.TransportError, httpx.HTTPStatusError) as exc:
             last_error = exc
             if attempt == max_retries:
@@ -80,7 +81,7 @@ def _retry_after_seconds(response: httpx.Response, attempt: int) -> float:
     header = response.headers.get("Retry-After")
     if header and header.isdigit():
         return float(header)
-    return POLITE_DELAY * (2**attempt)
+    return float(POLITE_DELAY * (2**attempt))
 
 
 class Source(ABC):

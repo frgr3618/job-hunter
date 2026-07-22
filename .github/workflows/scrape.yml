@@ -1,0 +1,45 @@
+name: Daily job scrape
+
+# Fetches fresh jobs, ranks them against your CV, and commits the updated
+# docs/data/*.json back to the repo. GitHub Pages then serves the new results.
+on:
+  schedule:
+    - cron: "0 5 * * *"   # every day at 05:00 UTC (~06:00-07:00 Sweden time)
+  workflow_dispatch: {}    # also allow manual "Run workflow" from the Actions tab
+
+# The default token needs write access to push the updated data back.
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install project
+        run: pip install -e "."
+
+      # cv.md is gitignored (kept out of the public repo). Recreate it here from
+      # an encrypted repo secret so the semantic ranking still works in CI.
+      - name: Restore CV from secret
+        env:
+          CV_MD: ${{ secrets.CV_MD }}
+        run: printf '%s' "$CV_MD" > cv.md
+
+      - name: Run pipeline
+        run: job-hunter -v run
+
+      - name: Commit updated job data
+        run: |
+          git config user.name "job-hunter-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/data/jobs.json docs/data/seen.json
+          # Only commit if something actually changed, to avoid empty commits.
+          git diff --staged --quiet || git commit -m "chore: daily job data ($(date -u +%Y-%m-%d))"
+          git push

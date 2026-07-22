@@ -11,7 +11,7 @@ Two responsibilities:
 from __future__ import annotations
 
 import json
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from .models import Job
@@ -41,10 +41,10 @@ def dedupe(jobs: list[Job]) -> list[Job]:
     return list(best.values())
 
 
-def _earliest(a: object, b: object) -> object:
+def _earliest(a: datetime | None, b: datetime | None) -> datetime | None:
     """Return the earlier of two datetimes, ignoring any that are None."""
     dates = [d for d in (a, b) if d is not None]
-    return min(dates) if dates else None  # type: ignore[type-var]
+    return min(dates) if dates else None
 
 
 def load_seen(path: Path) -> dict[str, str]:
