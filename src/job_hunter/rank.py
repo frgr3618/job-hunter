@@ -11,11 +11,12 @@ so the report can explain *why* a job ranked where it did.
 
 from __future__ import annotations
 
+import bisect
 import re
 from datetime import datetime, timezone
 from functools import lru_cache
 
-from .config import Config
+from .config import Blend, Config
 from .language import is_english
 from .models import Job
 
@@ -49,11 +50,69 @@ def rank(jobs: list[Job], config: Config) -> list[Job]:
             continue
         if ranking.english_only and not is_english(f"{job.title} {job.description}"):
             continue
-        job.keyword_score = _keyword_score(job, config)
-        job.score = job.keyword_score  # keyword-only blend for now
+        job.keyword_score = _keyword_score(job, config)  # also fills score_reasons
         kept.append(job)
+
+    # Rescale each raw signal to a 0-100 percentile within this batch, so the
+    # blend weights control real influence regardless of the signals' raw scales.
+    _assign_norms(kept)
+    for job in kept:
+        job.score = _blend(job, config.blend)
     kept.sort(key=lambda j: j.score, reverse=True)
     return kept
+
+
+def _assign_norms(jobs: list[Job]) -> None:
+    """Set keyword_norm / semantic_norm as within-batch percentiles (0-100)."""
+    if not jobs:
+        return
+    keyword_pct = _percentiles([j.keyword_score or 0.0 for j in jobs])
+    has_semantic = any(j.semantic_score is not None for j in jobs)
+    semantic_pct = _percentiles([j.semantic_score or 0.0 for j in jobs]) if has_semantic else None
+    for i, job in enumerate(jobs):
+        job.keyword_norm = keyword_pct[i]
+        job.semantic_norm = semantic_pct[i] if semantic_pct is not None else None
+        if job.semantic_norm is not None:
+            job.score_reasons.append(f"cv match {job.semantic_norm:.0f}th pct")
+
+
+def _percentiles(values: list[float]) -> list[float]:
+    """Map each value to its percentile rank (0-100) among all values.
+
+    Ties share the average rank; the min maps to 0 and the max to 100. This
+    makes the semantic signal (tiny cosine numbers) comparable to the keyword
+    signal (tens of points) before they're blended.
+    """
+    n = len(values)
+    if n == 1:
+        return [100.0]
+    ordered = sorted(values)
+    out: list[float] = []
+    for value in values:
+        low = bisect.bisect_left(ordered, value)   # count strictly less
+        high = bisect.bisect_right(ordered, value)  # count <= value
+        midrank = (low + high - 1) / 2               # average 0-based rank for ties
+        out.append(midrank / (n - 1) * 100)
+    return out
+
+
+def _blend(job: Job, blend: Blend) -> float:
+    """Combine the available normalized (0-100) signals using config weights.
+
+    Keyword is always present. Semantic (CV similarity) and relevance join only
+    when available. Weights are renormalized over whatever's present, so dropping
+    a signal shifts its share to the others rather than shrinking the score.
+    """
+    parts: list[tuple[float, float]] = [(blend.keyword, job.keyword_norm or 0.0)]
+    if job.semantic_norm is not None:
+        parts.append((blend.semantic, job.semantic_norm))
+    if job.relevance_prob is not None:
+        parts.append((blend.relevance, job.relevance_prob * 100))
+
+    total_weight = sum(weight for weight, _ in parts)
+    if total_weight <= 0:
+        return job.keyword_norm or 0.0
+    return sum(weight * value for weight, value in parts) / total_weight
 
 
 def _searchable_text(job: Job) -> tuple[str, str]:

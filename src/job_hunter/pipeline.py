@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from .config import ApiKeys, Config
 from .dedupe import dedupe, load_seen, mark_new
 from .rank import rank
+from .recommender import add_semantic_scores, load_cv
 from .report import SEEN_PATH, write_jobs, write_seen
 from .sources import SOURCES
 from .models import Job
@@ -53,6 +54,9 @@ def run(
     today = datetime.now(timezone.utc).date()
     seen = load_seen(SEEN_PATH)
     updated_seen = mark_new(deduped, seen, today)
+
+    # Semantic layer: score each job by how similar its text is to the CV.
+    add_semantic_scores(deduped, load_cv())
 
     ranked = rank(deduped, config)
     log.info("ranked %d jobs (after filters)", len(ranked))

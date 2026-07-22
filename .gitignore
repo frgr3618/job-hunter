@@ -13,6 +13,9 @@ venv/
 # Env / secrets
 .env
 
+# Personal CV — kept out of the public repo; supplied to CI via a GitHub secret.
+cv.md
+
 # Tooling caches
 .pytest_cache/
 .mypy_cache/

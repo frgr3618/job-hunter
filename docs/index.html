@@ -51,6 +51,7 @@
     th.sorted::after { content: attr(data-arrow); margin-left: 4px; color: var(--accent); }
     tr:last-child td { border-bottom: none; }
     .score { font-weight: 700; font-variant-numeric: tabular-nums; cursor: help; }
+    .sig { color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
     .title a { color: var(--accent); text-decoration: none; font-weight: 600; }
     .title a:hover { text-decoration: underline; }
     .company, .loc { color: var(--text); }
@@ -86,6 +87,8 @@
         <thead>
           <tr>
             <th data-key="score" data-num="1">Score</th>
+            <th data-key="keyword_norm" data-num="1" title="Keyword-rule rank (percentile)">Keyword</th>
+            <th data-key="semantic_norm" data-num="1" title="CV-similarity rank (percentile)">CV match</th>
             <th data-key="title">Title</th>
             <th data-key="company">Company</th>
             <th data-key="location">Location</th>
@@ -136,7 +139,11 @@
       return [...list].sort((a, b) => {
         let av = a[key], bv = b[key];
         if (key === "posted_at") { av = av || ""; bv = bv || ""; }
-        if (typeof av === "string") { av = av.toLowerCase(); bv = (bv || "").toLowerCase(); }
+        if (typeof av === "string" || typeof bv === "string") {
+          av = String(av ?? "").toLowerCase(); bv = String(bv ?? "").toLowerCase();
+        } else {
+          av = av ?? -1; bv = bv ?? -1;  // blank numeric signals sort last
+        }
         if (av < bv) return -dir;
         if (av > bv) return dir;
         return 0;
@@ -157,6 +164,8 @@
         const label = fbGet(job.job_key);
         tr.innerHTML = `
           <td><span class="score" title="${escapeHtml(reasons)}">${Math.round(job.score)}</span></td>
+          <td class="sig">${job.keyword_norm == null ? "—" : Math.round(job.keyword_norm)}</td>
+          <td class="sig">${job.semantic_norm == null ? "—" : Math.round(job.semantic_norm)}</td>
           <td class="title"><a href="${escapeAttr(job.url)}" target="_blank" rel="noopener">${escapeHtml(job.title)}</a>${job.is_new ? '<span class="badge-new">NEW</span>' : ""}</td>
           <td class="company">${escapeHtml(job.company)}</td>
           <td class="loc">${escapeHtml(job.location) || "—"}</td>

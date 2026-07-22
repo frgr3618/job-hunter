@@ -53,9 +53,13 @@ class Job(BaseModel):
 
     # --- individual ML signals that get blended into `score` ---
     # Each is optional so the system still works before the CV/model exist.
-    keyword_score: float | None = None  # from hand-tuned keyword rules
-    semantic_score: float | None = None  # TF-IDF cosine similarity to the CV
+    keyword_score: float | None = None  # from hand-tuned keyword rules (raw)
+    semantic_score: float | None = None  # TF-IDF cosine similarity to the CV (raw)
     relevance_prob: float | None = None  # trained classifier probability
+    # Each raw signal rescaled to a 0-100 percentile within the day's batch, so
+    # the blend weights control real influence. These are what get blended.
+    keyword_norm: float | None = None
+    semantic_norm: float | None = None
     skills: list[str] = Field(default_factory=list)  # extracted skill tags
     fit_summary: str | None = None  # optional LLM fit/gap note
 
