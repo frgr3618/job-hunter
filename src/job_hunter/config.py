@@ -61,6 +61,9 @@ class Ranking(BaseModel):
     english_only: bool = False
     # Linear recency boost applied within this many days of posting.
     recency_days: int = 30
+    # Hard cutoff: drop postings older than this many days (0 = keep all ages).
+    # Jobs with no posting date are always kept.
+    max_age_days: int = 0
     # Extra points for remote roles.
     remote_boost: float = 10.0
 

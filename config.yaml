@@ -68,6 +68,8 @@ ranking:
     - erfaren        # Swedish: "experienced"
   # Linear recency boost applied within this many days of posting.
   recency_days: 30
+  # Hard cutoff: drop any posting older than this many days (0 = keep all ages).
+  max_age_days: 45   # ~1.5 months
   # Boost applied to remote roles.
   remote_boost: 10
 

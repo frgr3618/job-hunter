@@ -48,6 +48,8 @@ def rank(jobs: list[Job], config: Config) -> list[Job]:
     for job in jobs:
         if _is_excluded(job, config):
             continue
+        if _too_old(job, ranking.max_age_days):
+            continue
         if ranking.english_only and not is_english(f"{job.title} {job.description}"):
             continue
         job.keyword_score = _keyword_score(job, config)  # also fills score_reasons
@@ -181,6 +183,20 @@ def _keyword_score(job: Job, config: Config) -> float:
 
     job.score_reasons = reasons
     return _clamp(score, 0.0, 100.0)
+
+
+def _too_old(job: Job, max_age_days: int) -> bool:
+    """True if the posting is older than `max_age_days` (0 disables the filter).
+
+    Jobs with no posting date are kept — we don't drop what we can't measure.
+    """
+    if max_age_days <= 0 or job.posted_at is None:
+        return False
+    posted = job.posted_at
+    if posted.tzinfo is None:  # treat naive timestamps as UTC
+        posted = posted.replace(tzinfo=UTC)
+    age_days = (datetime.now(UTC) - posted).total_seconds() / 86400
+    return age_days > max_age_days
 
 
 def _recency_boost(job: Job, recency_days: int) -> float:

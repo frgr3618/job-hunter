@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 from datetime import date, datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 # Collapses any run of whitespace into a single space; used to normalize the
 # title/company text before we build a job's identity key.
@@ -63,9 +63,13 @@ class Job(BaseModel):
     skills: list[str] = Field(default_factory=list)  # extracted skill tags
     fit_summary: str | None = None  # optional LLM fit/gap note
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def job_key(self) -> str:
         """Identity used for dedupe and 'new since last run' tracking.
+
+        Declared as a computed_field (not a plain property) so it's included in
+        model_dump()/jobs.json — the web viewer keys 👍/👎 feedback off it.
 
         Two postings of the same role at the same company collapse to one key,
         even across sources or with minor whitespace/casing differences.
