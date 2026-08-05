@@ -19,19 +19,17 @@ locations:
 # How the final 0-100 score blends the three signals. Weights are renormalized
 # automatically if a signal is unavailable (e.g. no CV yet, or no trained model).
 blend:
-  keyword: 0.4     # hand-tuned keyword rules below
+  keyword: 0.2     # hand-tuned keyword rules below
   semantic: 0.4    # TF-IDF cosine similarity of the job to your cv.md
-  relevance: 0.2   # trained relevance classifier probability (after you label some jobs)
+  relevance: 0.4   # trained relevance classifier probability (after you label some jobs)
 
 ranking:
   # Terms that raise the keyword score (weight added; title matches count double).
   positive:
     # Seniority: bias toward entry-level / junior roles.
-    junior: 15
-    "entry level": 15
+    junior: 25
+    "entry level": 25
     graduate: 12
-    nyexaminerad: 12   # Swedish: "newly graduated"
-    trainee: 8
     # Skills / tools you value.
     python: 15
     "machine learning": 12
