@@ -61,6 +61,17 @@
       font-size: 11px; font-weight: 700; color: var(--new); background: var(--new-bg);
       vertical-align: middle;
     }
+    /* Years of experience the ad asks for. Amber once it's above what you can
+       claim — a nudge, not a wall: these roles are still worth a look. */
+    .badge-exp {
+      display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 999px;
+      font-size: 11px; font-weight: 700; vertical-align: middle;
+      color: var(--muted); border: 1px solid var(--border);
+    }
+    .badge-exp.stretch { color: #b45309; border-color: #f59e0b; background: #fef3c7; }
+    @media (prefers-color-scheme: dark) {
+      .badge-exp.stretch { color: #fbbf24; border-color: #b45309; background: #78350f33; }
+    }
     .fb { display: inline-flex; gap: 4px; }
     .fb button { padding: 4px 8px; font-size: 15px; line-height: 1; }
     .fb button.up.active { background: var(--up); border-color: var(--up); color: #fff; }
@@ -123,6 +134,19 @@
       return isNaN(d) ? "—" : d.toISOString().slice(0, 10);
     }
 
+    // Years you can credibly claim — mirrors ranking.max_years_experience in
+    // config.yaml. Ads asking for more get an amber badge; they're already
+    // scored down by the ranker, but they stay on the list on purpose.
+    const MAX_YEARS = 2;
+
+    function expBadge(years) {
+      if (years == null) return "";
+      const stretch = years > MAX_YEARS ? " stretch" : "";
+      const hint = stretch ? `asks for ${years} years — a stretch, but worth a look`
+                           : `asks for ${years} years — within reach`;
+      return `<span class="badge-exp${stretch}" title="${hint}">${years}y</span>`;
+    }
+
     function passesFilters(job) {
       const q = $("q").value.trim().toLowerCase();
       if ($("newonly").checked && !job.is_new) return false;
@@ -162,11 +186,12 @@
         const tr = document.createElement("tr");
         const reasons = (job.score_reasons || []).join(" · ") || "no scoring reasons";
         const label = fbGet(job.job_key);
+        const exp = expBadge(job.years_required);
         tr.innerHTML = `
           <td><span class="score" title="${escapeHtml(reasons)}">${Math.round(job.score)}</span></td>
           <td class="sig">${job.keyword_norm == null ? "—" : Math.round(job.keyword_norm)}</td>
           <td class="sig">${job.semantic_norm == null ? "—" : Math.round(job.semantic_norm)}</td>
-          <td class="title"><a href="${escapeAttr(job.url)}" target="_blank" rel="noopener">${escapeHtml(job.title)}</a>${job.is_new ? '<span class="badge-new">NEW</span>' : ""}</td>
+          <td class="title"><a href="${escapeAttr(job.url)}" target="_blank" rel="noopener">${escapeHtml(job.title)}</a>${job.is_new ? '<span class="badge-new">NEW</span>' : ""}${exp}</td>
           <td class="company">${escapeHtml(job.company)}</td>
           <td class="loc">${escapeHtml(job.location) || "—"}</td>
           <td class="src">${escapeHtml(job.source)}</td>
@@ -227,7 +252,9 @@
     function escapeAttr(s) { return String(s ?? "").replace(/["'&<>]/g, (c) => ({ '"': "&quot;", "'": "&#39;", "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
 
     // Load data.
-    fetch("./data/jobs.json")
+    // The data file is rewritten every morning at the same URL, so a cached copy
+    // silently shows you yesterday's jobs. Bypass the cache explicitly.
+    fetch(`./data/jobs.json?t=${Date.now()}`, { cache: "no-store" })
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then((data) => {
         jobs = data.jobs || [];

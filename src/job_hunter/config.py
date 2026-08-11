@@ -59,6 +59,19 @@ class Ranking(BaseModel):
     excluded_titles: list[str] = Field(default_factory=list)
     # If true, drop ads that look like they're written in Swedish (keep English).
     english_only: bool = False
+    # If true, keep only jobs that are remote or in one of `locations`. Jobs with
+    # no location at all are kept — we don't drop what we can't measure.
+    location_filter: bool = False
+    # Years of experience you can credibly claim. Ads asking for more are pushed
+    # down by `experience_penalty` points per extra year. 0 disables the whole
+    # thing. This is a penalty, not a filter, because ads overstate what they
+    # need and the good ones are worth stretching for.
+    max_years_experience: int = 0
+    # Points subtracted per year of experience demanded beyond max_years_experience.
+    experience_penalty: float = 8.0
+    # Set true to drop over-experienced ads outright instead of demoting them.
+    # Off by default: it hides roles you'd probably still apply for.
+    drop_over_experience: bool = False
     # Linear recency boost applied within this many days of posting.
     recency_days: int = 30
     # Hard cutoff: drop postings older than this many days (0 = keep all ages).

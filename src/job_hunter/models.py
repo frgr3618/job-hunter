@@ -60,6 +60,9 @@ class Job(BaseModel):
     # the blend weights control real influence. These are what get blended.
     keyword_norm: float | None = None
     semantic_norm: float | None = None
+    # Years of experience the ad asks for, extracted from its text (None = unstated).
+    # Shown in the viewer so you can judge the stretch yourself.
+    years_required: int | None = None
     skills: list[str] = Field(default_factory=list)  # extracted skill tags
     fit_summary: str | None = None  # optional LLM fit/gap note
 

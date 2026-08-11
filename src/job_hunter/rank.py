@@ -17,6 +17,7 @@ from datetime import UTC, datetime
 from functools import lru_cache
 
 from .config import Blend, Config
+from .experience import required_years, seniority_gap
 from .language import is_english
 from .models import Job
 
@@ -51,6 +52,11 @@ def rank(jobs: list[Job], config: Config) -> list[Job]:
         if _too_old(job, ranking.max_age_days):
             continue
         if ranking.english_only and not is_english(f"{job.title} {job.description}"):
+            continue
+        if ranking.location_filter and _wrong_location(job, config):
+            continue
+        job.years_required = required_years(f"{job.title} {job.description}")
+        if _experience_gap(job, config) and ranking.drop_over_experience:
             continue
         job.keyword_score = _keyword_score(job, config)  # also fills score_reasons
         kept.append(job)
@@ -117,6 +123,29 @@ def _blend(job: Job, blend: Blend) -> float:
     return sum(weight * value for weight, value in parts) / total_weight
 
 
+def _experience_gap(job: Job, config: Config) -> int:
+    """Years demanded beyond what you have (0 when within reach or disabled).
+
+    `max_years_experience: 0` turns the whole thing off, matching how
+    `max_age_days: 0` disables the age cutoff.
+    """
+    max_years = config.ranking.max_years_experience
+    if max_years <= 0:
+        return 0
+    return seniority_gap(job.years_required, max_years)
+
+
+def _wrong_location(job: Job, config: Config) -> bool:
+    """True if the job is somewhere you can't work.
+
+    Remote roles pass wherever they're registered. Ads with no location at all
+    are kept — we don't drop what we can't measure.
+    """
+    if job.remote or not job.location.strip():
+        return False
+    return not _matches_location(job, config)
+
+
 def _searchable_text(job: Job) -> tuple[str, str]:
     """Return (title_text, body_text), both lowercased, for term matching."""
     title = job.title.lower()
@@ -180,6 +209,14 @@ def _keyword_score(job: Job, config: Config) -> float:
     if _matches_location(job, config):
         score += LOCATION_BOOST
         reasons.append(f"location +{LOCATION_BOOST:g}")
+
+    # Over-experienced ads sink rather than disappear: you'd still apply to a
+    # great role asking for one more year than you have.
+    gap = _experience_gap(job, config)
+    if gap:
+        penalty = gap * ranking.experience_penalty
+        score -= penalty
+        reasons.append(f"wants {job.years_required}y exp -{penalty:g}")
 
     job.score_reasons = reasons
     return _clamp(score, 0.0, 100.0)

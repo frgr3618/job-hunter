@@ -249,3 +249,92 @@ def test_semantic_signal_changes_the_order() -> None:
 
 def test_rank_of_an_empty_list() -> None:
     assert rank([], cfg()) == []
+
+
+# --- location filter ---------------------------------------------------------
+
+COMMUTABLE = ["Stockholm", "Uppsala", "Remote"]
+
+
+def strict(**extra: Any) -> Config:
+    return cfg(locations=COMMUTABLE, location_filter=True, **extra)
+
+
+def test_faraway_jobs_are_dropped() -> None:
+    assert rank([make_job(location="Göteborg, Västra Götalands län")], strict()) == []
+
+
+def test_wanted_city_survives() -> None:
+    assert len(rank([make_job(location="Stockholm, Stockholms län")], strict())) == 1
+
+
+def test_county_suffix_keeps_commuter_towns() -> None:
+    """Solna and Södertälje arrive as '<town>, Stockholms län'. They're within
+    reach and must not be filtered out by an exact-city match."""
+    jobs = [make_job(location="Solna, Stockholms län", source_id="1"),
+            make_job(location="Södertälje, Stockholms län", source_id="2")]
+    assert len(rank(jobs, strict())) == 2
+
+
+def test_remote_survives_from_anywhere() -> None:
+    """A remote role registered in Göteborg is still a remote role."""
+    job = make_job(location="Göteborg, Västra Götalands län", remote=True)
+    assert len(rank([job], strict())) == 1
+
+
+def test_unknown_location_is_kept() -> None:
+    assert len(rank([make_job(location="")], strict())) == 1
+
+
+def test_filter_is_off_by_default() -> None:
+    """Existing configs must not start silently dropping jobs on upgrade."""
+    jobs = [make_job(location="Kalmar, Kalmar län")]
+    assert len(rank(jobs, cfg(locations=COMMUTABLE))) == 1
+
+
+# --- experience penalty ------------------------------------------------------
+
+TOO_SENIOR = "At least 5 years of experience in a similar role."
+JUNIOR_OK = "At least 2 years of experience in a similar role."
+
+
+def test_over_experienced_job_is_demoted_not_removed() -> None:
+    """The whole design decision: he thumbed up ads wanting 3 and 5 years, so
+    these must stay reachable — just lower down."""
+    jobs = [make_job(description=TOO_SENIOR)]
+    ranked = rank(jobs, cfg(max_years_experience=2, experience_penalty=8))
+    assert len(ranked) == 1
+    assert ranked[0].years_required == 5
+
+
+def test_penalty_scales_with_the_gap() -> None:
+    reachable = rank([make_job(description=JUNIOR_OK)],
+                     cfg(positive={"experience": 50}, max_years_experience=2))
+    stretch = rank([make_job(description=TOO_SENIOR)],
+                   cfg(positive={"experience": 50}, max_years_experience=2))
+    assert stretch[0].keyword_score < reachable[0].keyword_score
+
+
+def test_penalty_appears_in_the_reasons() -> None:
+    ranked = rank([make_job(description=TOO_SENIOR)],
+                  cfg(max_years_experience=2, experience_penalty=8))
+    assert "wants 5y exp -24" in ranked[0].score_reasons
+
+
+def test_years_required_is_recorded_even_when_reachable() -> None:
+    """The viewer shows this as a badge, so it must be set regardless."""
+    ranked = rank([make_job(description=JUNIOR_OK)], cfg(max_years_experience=2))
+    assert ranked[0].years_required == 2
+
+
+def test_zero_max_years_disables_the_penalty() -> None:
+    ranked = rank([make_job(description=TOO_SENIOR)],
+                  cfg(max_years_experience=0, experience_penalty=8))
+    assert ranked[0].keyword_score == 0
+    assert not any("exp" in r for r in ranked[0].score_reasons)
+
+
+def test_hard_drop_is_opt_in() -> None:
+    jobs = [make_job(description=TOO_SENIOR)]
+    assert len(rank(jobs, cfg(max_years_experience=2))) == 1
+    assert rank(jobs, cfg(max_years_experience=2, drop_over_experience=True)) == []

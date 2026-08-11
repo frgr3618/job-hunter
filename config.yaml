@@ -56,6 +56,16 @@ ranking:
     - consulting
   # Keep only ads that read as English (drop Swedish-language ads).
   english_only: true
+  # Only show jobs you could actually take: remote, or in `locations` above.
+  # ("Stockholms län" contains "Stockholm", so Solna/Södertälje pass too.)
+  location_filter: true
+  # Years of experience you can claim. Ads wanting more are pushed DOWN the list,
+  # not hidden — you thumbed up roles asking for 3 and 5 years, so hiding them
+  # would have cost you jobs you wanted. Set drop_over_experience: true to hide
+  # them instead. 0 disables this entirely.
+  max_years_experience: 2
+  experience_penalty: 8      # points off per extra year demanded
+  drop_over_experience: false
   # A job is dropped if any of these appear in its TITLE (level filtering).
   excluded_titles:
     - senior

@@ -16,6 +16,11 @@ venv/
 # Personal CV — kept out of the public repo; supplied to CI via a GitHub secret.
 cv.md
 
+# Your 👍/👎 labels. A record of which employers you liked, so it stays local.
+# The trained model is the portfolio piece; the raw opinions aren't.
+feedback.csv
+docs/data/feedback.csv
+
 # Tooling caches
 .pytest_cache/
 .mypy_cache/
