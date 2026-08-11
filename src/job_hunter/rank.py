@@ -136,14 +136,31 @@ def _experience_gap(job: Job, config: Config) -> int:
 
 
 def _wrong_location(job: Job, config: Config) -> bool:
-    """True if the job is somewhere you can't work.
+    """True if taking this job would mean showing up at an office you can't reach.
 
-    Remote roles pass wherever they're registered. Ads with no location at all
-    are kept — we don't drop what we can't measure.
+    The rule: a wanted city (on-site or hybrid, doesn't matter), or fully remote
+    with no office anywhere. Everything else goes — a hybrid role in Göteborg is
+    a Göteborg job however few days a week it asks for.
+
+    When the location field is blank we read the ad text instead of guessing;
+    an unnamed city is not an excuse to show a job you can't take.
     """
-    if job.remote or not job.location.strip():
+    if job.remote:  # remote.py already rejects hybrid/on-site wording
         return False
-    return not _matches_location(job, config)
+    if job.location.strip():
+        return not _matches_location(job, config)
+    return not _mentions_wanted_location(job, config)
+
+
+def _mentions_wanted_location(job: Job, config: Config) -> bool:
+    """True if the ad's text names one of your cities (used when there's no
+    location field — plenty of ads say 'based in Stockholm' in the body)."""
+    text = f"{job.title} {job.description}".lower()
+    return any(
+        _contains(wanted.lower(), text)
+        for wanted in config.locations
+        if wanted.lower() != "remote"
+    )
 
 
 def _searchable_text(job: Job) -> tuple[str, str]:

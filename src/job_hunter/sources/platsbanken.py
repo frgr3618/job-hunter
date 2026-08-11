@@ -14,6 +14,7 @@ from dateutil import parser as date_parser
 
 from ..config import ApiKeys, Config
 from ..models import Job
+from ..remote import looks_remote
 from .base import POLITE_DELAY, Source, build_client, get_json
 
 log = logging.getLogger(__name__)
@@ -21,8 +22,9 @@ log = logging.getLogger(__name__)
 API_URL = "https://jobsearch.api.jobtechdev.se/search"
 MAX_PER_REQUEST = 100  # JobTech caps a single request at 100 results
 
-# Words that signal a remote role when the API doesn't flag it explicitly.
-_REMOTE_HINTS = ("distans", "remote", "på distans", "hemifrån", "work from home")
+# Remote detection lives in remote.py — a bare "remote" substring matches every
+# ad that merely mentions flexible hours, which put Göteborg jobs on a
+# Stockholm-only list. See that module for why the test is deliberately strict.
 
 
 class Platsbanken(Source):
@@ -76,8 +78,7 @@ class Platsbanken(Source):
             value = hit.get(key)
             if isinstance(value, bool):
                 return value
-        text = f"{hit.get('headline', '')} {description}".lower()
-        return any(hint in text for hint in _REMOTE_HINTS)
+        return looks_remote(f"{hit.get('headline', '')} {description}")
 
 
 def _parse_date(value: str | None) -> Any:

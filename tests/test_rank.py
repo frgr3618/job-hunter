@@ -282,8 +282,26 @@ def test_remote_survives_from_anywhere() -> None:
     assert len(rank([job], strict())) == 1
 
 
-def test_unknown_location_is_kept() -> None:
-    assert len(rank([make_job(location="")], strict())) == 1
+def test_blank_location_falls_back_to_the_ad_text() -> None:
+    """Plenty of ads leave the field empty but say 'based in Stockholm' in the
+    body. Read the text rather than guessing either way."""
+    named = make_job(location="", description="A full-time role based in Stockholm.")
+    assert len(rank([named], strict())) == 1
+
+
+def test_blank_location_with_no_city_named_is_dropped() -> None:
+    """An unnamed city is not a reason to show a job he might not be able to take."""
+    anonymous = make_job(location="", description="A full-time engineering role.")
+    assert rank([anonymous], strict()) == []
+
+
+def test_hybrid_elsewhere_is_dropped_even_though_it_mentions_remote() -> None:
+    """One office day in Göteborg makes it a Göteborg job."""
+    job = make_job(
+        location="Göteborg, Västra Götalands län",
+        description="Possibility to work from home some days a week.",
+    )
+    assert rank([job], strict()) == []
 
 
 def test_filter_is_off_by_default() -> None:
