@@ -22,11 +22,10 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: Ruff (lint)
-        run: ruff check src/
+        run: ruff check src/ tests/
 
       - name: Mypy (type-check)
         run: mypy
 
-      # Tests come next: uncomment once a tests/ directory exists.
-      # - name: Pytest
-      #   run: pytest
+      - name: Pytest
+        run: pytest
