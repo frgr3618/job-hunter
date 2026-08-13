@@ -56,7 +56,9 @@ def test_empty_required_list_keeps_everything() -> None:
     assert len(rank([make_job()], cfg(required=[]))) == 1
 
 
-def test_english_only_drops_swedish_ads() -> None:
+def test_swedish_ad_without_a_language_demand_is_kept() -> None:
+    """A Swedish-written ad you could still take must survive — the language the
+    ad happens to be written in is not a reason to hide the job."""
     swedish = make_job(
         description=(
             "Vi söker en analytiker som vill arbeta med maskininlärning hos oss. "
@@ -64,7 +66,12 @@ def test_english_only_drops_swedish_ads() -> None:
             "erfarenhet av Python. Vi erbjuder dig en trygg anställning."
         )
     )
-    assert rank([swedish], cfg(english_only=True)) == []
+    assert len(rank([swedish], cfg(drop_if_swedish_required=True))) == 1
+
+
+def test_stated_swedish_requirement_drops_the_job() -> None:
+    demanding = make_job(description="Du behärskar svenska i tal och skrift.")
+    assert rank([demanding], cfg(drop_if_swedish_required=True)) == []
 
 
 def test_old_postings_are_dropped() -> None:

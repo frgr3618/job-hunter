@@ -18,7 +18,7 @@ from functools import lru_cache
 
 from .config import Blend, Config
 from .experience import required_years, seniority_gap
-from .language import is_english
+from .language import requires_swedish
 from .models import Job
 
 # How many points a fresh-vs-old posting and a location match are worth.
@@ -51,7 +51,9 @@ def rank(jobs: list[Job], config: Config) -> list[Job]:
             continue
         if _too_old(job, ranking.max_age_days):
             continue
-        if ranking.english_only and not is_english(f"{job.title} {job.description}"):
+        if ranking.drop_if_swedish_required and requires_swedish(
+            f"{job.title} {job.description}"
+        ):
             continue
         if ranking.location_filter and _wrong_location(job, config):
             continue

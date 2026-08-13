@@ -57,8 +57,11 @@ class Ranking(BaseModel):
     # seniority ("senior", "lead") so a junior role that merely mentions a senior
     # colleague in its description isn't wrongly removed.
     excluded_titles: list[str] = Field(default_factory=list)
-    # If true, drop ads that look like they're written in Swedish (keep English).
-    english_only: bool = False
+    # If true, drop ads that state Swedish as a requirement. The language the ad
+    # is *written* in is ignored — a Swedish-written ad that never demands
+    # Swedish is a job you can still take, and those are the least contested.
+    # "Svenska är meriterande" counts as a plus, not a requirement, so it stays.
+    drop_if_swedish_required: bool = False
     # If true, keep only jobs that are remote or in one of `locations`. Jobs with
     # no location at all are kept — we don't drop what we can't measure.
     location_filter: bool = False

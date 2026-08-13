@@ -20,7 +20,7 @@ ranking:
   positive:
     python: 15
   excluded_titles: [senior]
-  english_only: true
+  drop_if_swedish_required: true
 """
 
 
@@ -35,7 +35,7 @@ def test_loads_a_valid_config(tmp_path: Path) -> None:
     assert config.queries == ["data scientist"]
     assert config.blend.semantic == 0.5
     assert config.ranking.positive["python"] == 15
-    assert config.ranking.english_only is True
+    assert config.ranking.drop_if_swedish_required is True
 
 
 def test_missing_file_falls_back_to_defaults(tmp_path: Path) -> None:

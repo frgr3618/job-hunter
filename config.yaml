@@ -54,8 +54,11 @@ ranking:
     - praktik        # Swedish for "internship"
     - consultant
     - consulting
-  # Keep only ads that read as English (drop Swedish-language ads).
-  english_only: true
+  # Drop ads that REQUIRE Swedish. Ads merely written in Swedish are kept — if
+  # they never demand the language you can still apply, and those ads get far
+  # fewer international applicants. "Svenska är meriterande" is a plus, not a
+  # requirement, so those stay too.
+  drop_if_swedish_required: true
   # Only show jobs you could actually take: remote, or in `locations` above.
   # ("Stockholms län" contains "Stockholm", so Solna/Södertälje pass too.)
   location_filter: true
@@ -73,7 +76,6 @@ ranking:
     - principal
     - staff
     - "head of"
-    - erfaren        # Swedish: "experienced"
   # Linear recency boost applied within this many days of posting.
   recency_days: 30
   # Hard cutoff: drop any posting older than this many days (0 = keep all ages).
