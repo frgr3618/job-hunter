@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-13T16:25:55.938558+00:00",
+  "generated_at": "2026-08-14T06:10:32.106034+00:00",
   "count": 36,
   "jobs": [
     {
@@ -25,8 +25,8 @@
         "location +8",
         "cv match 100th pct"
       ],
-      "keyword_score": 58.00547536788194,
-      "semantic_score": 0.07622367471770214,
+      "keyword_score": 57.81459508173225,
+      "semantic_score": 0.07619857051622256,
       "relevance_prob": null,
       "keyword_norm": 91.42857142857143,
       "semantic_norm": 100.0,
@@ -61,8 +61,8 @@
         "wants 3y exp -8",
         "cv match 94th pct"
       ],
-      "keyword_score": 77.93167516361497,
-      "semantic_score": 0.06730310393324611,
+      "keyword_score": 77.74079486822917,
+      "semantic_score": 0.0673877171799908,
       "relevance_prob": null,
       "keyword_norm": 97.14285714285714,
       "semantic_norm": 94.28571428571428,
@@ -92,8 +92,8 @@
         "location +8",
         "cv match 97th pct"
       ],
-      "keyword_score": 39.33078414551312,
-      "semantic_score": 0.06781152227113613,
+      "keyword_score": 39.13990386206018,
+      "semantic_score": 0.06784507824610751,
       "relevance_prob": null,
       "keyword_norm": 80.0,
       "semantic_norm": 97.14285714285714,
@@ -115,7 +115,7 @@
       "salary": null,
       "first_seen": "2026-07-22",
       "is_new": false,
-      "score": 86.66666666666666,
+      "score": 84.76190476190476,
       "score_reasons": [
         "python +15",
         "machine learning +12",
@@ -125,13 +125,13 @@
         "recent +2",
         "location +8",
         "wants 3y exp -8",
-        "cv match 83th pct"
+        "cv match 80th pct"
       ],
-      "keyword_score": 63.00226924396219,
-      "semantic_score": 0.04250199576596739,
+      "keyword_score": 62.81138895506945,
+      "semantic_score": 0.04253891941638943,
       "relevance_prob": null,
       "keyword_norm": 94.28571428571428,
-      "semantic_norm": 82.85714285714286,
+      "semantic_norm": 80.0,
       "years_required": 3,
       "skills": [],
       "fit_summary": null,
@@ -158,7 +158,7 @@
         "cv match 91th pct"
       ],
       "keyword_score": 33.0,
-      "semantic_score": 0.05799005902405505,
+      "semantic_score": 0.05791776935067537,
       "relevance_prob": null,
       "keyword_norm": 70.0,
       "semantic_norm": 91.42857142857143,
@@ -180,18 +180,18 @@
       "salary": null,
       "first_seen": "2026-07-09",
       "is_new": false,
-      "score": 80.95238095238093,
+      "score": 82.85714285714286,
       "score_reasons": [
         "python +15",
         "title: AI +20",
         "location +8",
-        "cv match 80th pct"
+        "cv match 83th pct"
       ],
       "keyword_score": 43.0,
-      "semantic_score": 0.04249539672569354,
+      "semantic_score": 0.042544869433937434,
       "relevance_prob": null,
       "keyword_norm": 82.85714285714286,
-      "semantic_norm": 80.0,
+      "semantic_norm": 82.85714285714286,
       "years_required": null,
       "skills": [],
       "fit_summary": null,
@@ -218,8 +218,8 @@
         "location +8",
         "cv match 74th pct"
       ],
-      "keyword_score": 37.330995640513116,
-      "semantic_score": 0.0347367284739615,
+      "keyword_score": 37.14011536400463,
+      "semantic_score": 0.034705440835499306,
       "relevance_prob": null,
       "keyword_norm": 77.14285714285715,
       "semantic_norm": 74.28571428571429,
@@ -252,8 +252,8 @@
         "wants 5y exp -24",
         "cv match 86th pct"
       ],
-      "keyword_score": 29.294614878495373,
-      "semantic_score": 0.04960857469654536,
+      "keyword_score": 29.103734589876545,
+      "semantic_score": 0.04962535450938258,
       "relevance_prob": null,
       "keyword_norm": 51.42857142857142,
       "semantic_norm": 85.71428571428571,
@@ -282,8 +282,8 @@
         "location +8",
         "cv match 89th pct"
       ],
-      "keyword_score": 27.923568928086418,
-      "semantic_score": 0.051458507154440995,
+      "keyword_score": 27.732688652056325,
+      "semantic_score": 0.05140463114222402,
       "relevance_prob": null,
       "keyword_norm": 45.714285714285715,
       "semantic_norm": 88.57142857142857,
@@ -308,12 +308,12 @@
       "score": 71.42857142857143,
       "score_reasons": [
         "title: AI +20",
-        "recent +3",
+        "recent +2",
         "location +8",
         "cv match 77th pct"
       ],
-      "keyword_score": 30.6022343996875,
-      "semantic_score": 0.04042324319764668,
+      "keyword_score": 30.411354119398148,
+      "semantic_score": 0.040467352058814895,
       "relevance_prob": null,
       "keyword_norm": 60.0,
       "semantic_norm": 77.14285714285715,
@@ -343,8 +343,8 @@
         "location +8",
         "cv match 63th pct"
       ],
-      "keyword_score": 30.92578787820216,
-      "semantic_score": 0.02729547480639757,
+      "keyword_score": 30.73490759228009,
+      "semantic_score": 0.027274819074627532,
       "relevance_prob": null,
       "keyword_norm": 65.71428571428571,
       "semantic_norm": 62.857142857142854,
@@ -373,7 +373,7 @@
         "cv match 71th pct"
       ],
       "keyword_score": 23.0,
-      "semantic_score": 0.031005209800638808,
+      "semantic_score": 0.03099126438270634,
       "relevance_prob": null,
       "keyword_norm": 31.428571428571427,
       "semantic_norm": 71.42857142857143,
@@ -398,12 +398,12 @@
       "score": 54.28571428571428,
       "score_reasons": [
         "AI +10",
-        "recent +3",
+        "recent +2",
         "location +8",
         "cv match 69th pct"
       ],
-      "keyword_score": 20.601578370713735,
-      "semantic_score": 0.028038050552184928,
+      "keyword_score": 20.410698093059413,
+      "semantic_score": 0.028080111673517028,
       "relevance_prob": null,
       "keyword_norm": 25.71428571428571,
       "semantic_norm": 68.57142857142857,
@@ -432,7 +432,7 @@
         "cv match 66th pct"
       ],
       "keyword_score": 18.0,
-      "semantic_score": 0.02777202235758917,
+      "semantic_score": 0.027796180021441994,
       "relevance_prob": null,
       "keyword_norm": 17.142857142857142,
       "semantic_norm": 65.71428571428571,
@@ -465,7 +465,7 @@
         "cv match 20th pct"
       ],
       "keyword_score": 100.0,
-      "semantic_score": 0.012357610591049195,
+      "semantic_score": 0.012410383811961898,
       "relevance_prob": null,
       "keyword_norm": 100.0,
       "semantic_norm": 20.0,
@@ -496,8 +496,8 @@
         "wants 3y exp -8",
         "cv match 37th pct"
       ],
-      "keyword_score": 30.91598067982639,
-      "semantic_score": 0.019859110562402218,
+      "keyword_score": 30.72510039051697,
+      "semantic_score": 0.019903369571924557,
       "relevance_prob": null,
       "keyword_norm": 62.857142857142854,
       "semantic_norm": 37.142857142857146,
@@ -526,7 +526,7 @@
         "cv match 60th pct"
       ],
       "keyword_score": 18.0,
-      "semantic_score": 0.026368428346895748,
+      "semantic_score": 0.026405134588972298,
       "relevance_prob": null,
       "keyword_norm": 17.142857142857142,
       "semantic_norm": 60.0,
@@ -555,8 +555,8 @@
         "location +8",
         "cv match 49th pct"
       ],
-      "keyword_score": 23.335046620671296,
-      "semantic_score": 0.021442144909520212,
+      "keyword_score": 23.14416634290509,
+      "semantic_score": 0.021484410933521686,
       "relevance_prob": null,
       "keyword_norm": 34.285714285714285,
       "semantic_norm": 48.57142857142857,
@@ -587,8 +587,8 @@
         "location +8",
         "cv match 23th pct"
       ],
-      "keyword_score": 51.965895589398144,
-      "semantic_score": 0.014156977076405418,
+      "keyword_score": 51.775015311265435,
+      "semantic_score": 0.014236661640092905,
       "relevance_prob": null,
       "keyword_norm": 85.71428571428571,
       "semantic_norm": 22.857142857142858,
@@ -619,8 +619,8 @@
         "wants 3y exp -8",
         "cv match 26th pct"
       ],
-      "keyword_score": 37.028075407596454,
-      "semantic_score": 0.015244739284770823,
+      "keyword_score": 36.83719512917438,
+      "semantic_score": 0.015279480959569883,
       "relevance_prob": null,
       "keyword_norm": 74.28571428571429,
       "semantic_norm": 25.71428571428571,
@@ -645,11 +645,11 @@
       "score": 41.9047619047619,
       "score_reasons": [
         "AI +10",
-        "recent +8",
+        "recent +7",
         "cv match 57th pct"
       ],
-      "keyword_score": 17.6331369133179,
-      "semantic_score": 0.02324269475160851,
+      "keyword_score": 17.442256635709875,
+      "semantic_score": 0.023266391406423795,
       "relevance_prob": null,
       "keyword_norm": 11.428571428571429,
       "semantic_norm": 57.14285714285714,
@@ -681,8 +681,8 @@
         "location +8",
         "cv match 17th pct"
       ],
-      "keyword_score": 55.10893607670525,
-      "semantic_score": 0.010667983105920717,
+      "keyword_score": 54.91805579103009,
+      "semantic_score": 0.010698416584054786,
       "relevance_prob": null,
       "keyword_norm": 88.57142857142857,
       "semantic_norm": 17.142857142857142,
@@ -712,7 +712,7 @@
         "cv match 40th pct"
       ],
       "keyword_score": 24.0,
-      "semantic_score": 0.01991960347433932,
+      "semantic_score": 0.0199533828739625,
       "relevance_prob": null,
       "keyword_norm": 37.142857142857146,
       "semantic_norm": 40.0,
@@ -741,8 +741,8 @@
         "location +8",
         "cv match 31th pct"
       ],
-      "keyword_score": 29.267130252276235,
-      "semantic_score": 0.0188534968003779,
+      "keyword_score": 29.076249970814043,
+      "semantic_score": 0.018868246100900016,
       "relevance_prob": null,
       "keyword_norm": 48.57142857142857,
       "semantic_norm": 31.428571428571427,
@@ -773,7 +773,7 @@
         "cv match 54th pct"
       ],
       "keyword_score": 0.0,
-      "semantic_score": 0.023111135881749435,
+      "semantic_score": 0.023142199975482534,
       "relevance_prob": null,
       "keyword_norm": 2.857142857142857,
       "semantic_norm": 54.285714285714285,
@@ -803,7 +803,7 @@
         "cv match 51th pct"
       ],
       "keyword_score": 0.0,
-      "semantic_score": 0.02165437831343945,
+      "semantic_score": 0.02168165500837687,
       "relevance_prob": null,
       "keyword_norm": 2.857142857142857,
       "semantic_norm": 51.42857142857142,
@@ -832,7 +832,7 @@
         "cv match 43th pct"
       ],
       "keyword_score": 18.0,
-      "semantic_score": 0.02013534493454562,
+      "semantic_score": 0.02014893235982438,
       "relevance_prob": null,
       "keyword_norm": 17.142857142857142,
       "semantic_norm": 42.857142857142854,
@@ -856,12 +856,12 @@
       "is_new": false,
       "score": 33.333333333333336,
       "score_reasons": [
-        "recent +8",
+        "recent +7",
         "location +8",
         "cv match 46th pct"
       ],
-      "keyword_score": 15.56847692990355,
-      "semantic_score": 0.02141118188604786,
+      "keyword_score": 15.377596644139661,
+      "semantic_score": 0.021382339311921482,
       "relevance_prob": null,
       "keyword_norm": 8.571428571428571,
       "semantic_norm": 45.714285714285715,
@@ -890,8 +890,8 @@
         "location +8",
         "cv match 29th pct"
       ],
-      "keyword_score": 24.913615464594905,
-      "semantic_score": 0.016259631818839264,
+      "keyword_score": 24.722735186473763,
+      "semantic_score": 0.016277114814887004,
       "relevance_prob": null,
       "keyword_norm": 40.0,
       "semantic_norm": 28.57142857142857,
@@ -920,8 +920,8 @@
         "location +8",
         "cv match 34th pct"
       ],
-      "keyword_score": 22.86915170763503,
-      "semantic_score": 0.019642251686342937,
+      "keyword_score": 22.678271430027007,
+      "semantic_score": 0.019632953082313446,
       "relevance_prob": null,
       "keyword_norm": 28.57142857142857,
       "semantic_norm": 34.285714285714285,
@@ -951,7 +951,7 @@
         "cv match 11th pct"
       ],
       "keyword_score": 33.0,
-      "semantic_score": 0.003885869624824212,
+      "semantic_score": 0.0039031320943090195,
       "relevance_prob": null,
       "keyword_norm": 70.0,
       "semantic_norm": 11.428571428571429,
@@ -980,8 +980,8 @@
         "location +8",
         "cv match 14th pct"
       ],
-      "keyword_score": 30.023692786766976,
-      "semantic_score": 0.004008722973152549,
+      "keyword_score": 29.83281249869599,
+      "semantic_score": 0.004017402791074904,
       "relevance_prob": null,
       "keyword_norm": 57.14285714285714,
       "semantic_norm": 14.285714285714285,
@@ -1011,8 +1011,8 @@
         "location +8",
         "cv match 9th pct"
       ],
-      "keyword_score": 29.952041768707563,
-      "semantic_score": 0.003512897253165534,
+      "keyword_score": 29.761161482978395,
+      "semantic_score": 0.0035152606605296636,
       "relevance_prob": null,
       "keyword_norm": 54.285714285714285,
       "semantic_norm": 8.571428571428571,
@@ -1041,8 +1041,8 @@
         "location +8",
         "cv match 6th pct"
       ],
-      "keyword_score": 25.895104718094135,
-      "semantic_score": 0.003120349944790619,
+      "keyword_score": 25.704224440146604,
+      "semantic_score": 0.0031324462730287083,
       "relevance_prob": null,
       "keyword_norm": 42.857142857142854,
       "semantic_norm": 5.714285714285714,
@@ -1071,7 +1071,7 @@
         "cv match 3th pct"
       ],
       "keyword_score": 20.0,
-      "semantic_score": 0.0015836664143071295,
+      "semantic_score": 0.0015871381932002872,
       "relevance_prob": null,
       "keyword_norm": 22.857142857142858,
       "semantic_norm": 2.857142857142857,
@@ -1102,7 +1102,7 @@
         "cv match 0th pct"
       ],
       "keyword_score": 0.0,
-      "semantic_score": 0.000780102308996291,
+      "semantic_score": 0.0007841923831522176,
       "relevance_prob": null,
       "keyword_norm": 2.857142857142857,
       "semantic_norm": 0.0,
