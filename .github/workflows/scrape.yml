@@ -4,7 +4,7 @@ name: Daily job scrape
 # docs/data/*.json back to the repo. GitHub Pages then serves the new results.
 on:
   schedule:
-    - cron: "0 5 * * *"   # every day at 05:00 UTC (~06:00-07:00 Sweden time)
+    - cron: "17 5 * * *"   # every day at 05:17 UTC (~06:17-07:17 Sweden time) — off the hour so GitHub is less likely to drop it under load
   workflow_dispatch: {}    # also allow manual "Run workflow" from the Actions tab
 
 # The default token needs write access to push the updated data back.
