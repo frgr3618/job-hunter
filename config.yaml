@@ -9,7 +9,7 @@ queries:
   - "NLP engineer"
   - "data analyst"
 
-# Preferred locations. Used as Adzuna 'where' filter and as a location-match boost.
+# Preferred locations. Used as a location-match boost.
 # "Remote" is treated specially (matches remote-flagged / remote-mentioning jobs).
 locations:
   - "Stockholm"
@@ -87,5 +87,3 @@ ranking:
 sources:
   platsbanken:
     limit: 100       # results per query (max 100 per JobTech request)
-  adzuna:
-    max_pages: 2     # 50 results per page

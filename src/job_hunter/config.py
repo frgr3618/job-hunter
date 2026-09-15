@@ -5,8 +5,8 @@ touching Python:
 
 1. `config.yaml` — *what* to search for and *how* to rank (queries, locations,
    ranking weights). Loaded into a validated `Config` object here.
-2. `.env` — *secret* API keys (Adzuna, optional Anthropic). Kept out of git.
-   Loaded into an `ApiKeys` object.
+2. `.env` — *secret* API keys (optional Anthropic). Kept out of git. Loaded
+   into an `ApiKeys` object.
 
 Validating with pydantic means a typo (e.g. `postive:` instead of `positive:`)
 fails immediately with a clear message, instead of silently doing the wrong
@@ -89,15 +89,9 @@ class PlatsbankenSource(BaseModel):
     limit: int = 100  # results per query (JobTech caps a single request at 100)
 
 
-class AdzunaSource(BaseModel):
-    model_config = {"extra": "forbid"}
-    max_pages: int = 3  # 50 results per page
-
-
 class Sources(BaseModel):
     model_config = {"extra": "forbid"}
     platsbanken: PlatsbankenSource = Field(default_factory=PlatsbankenSource)
-    adzuna: AdzunaSource = Field(default_factory=AdzunaSource)
 
 
 class Config(BaseModel):
@@ -123,14 +117,7 @@ class Config(BaseModel):
 class ApiKeys(BaseModel):
     """Secret keys read from the environment (never from config.yaml/git)."""
 
-    adzuna_app_id: str | None = None
-    adzuna_app_key: str | None = None
     anthropic_api_key: str | None = None
-
-    @property
-    def has_adzuna(self) -> bool:
-        """True only if BOTH Adzuna keys are present; else that source is skipped."""
-        return bool(self.adzuna_app_id and self.adzuna_app_key)
 
     @classmethod
     def load(cls, env_path: Path = DEFAULT_ENV_PATH) -> ApiKeys:
@@ -141,8 +128,6 @@ class ApiKeys(BaseModel):
         """
         _load_dotenv(env_path)
         return cls(
-            adzuna_app_id=os.environ.get("ADZUNA_APP_ID") or None,
-            adzuna_app_key=os.environ.get("ADZUNA_APP_KEY") or None,
             anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY") or None,
         )
 

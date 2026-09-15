@@ -80,22 +80,16 @@ def test_dotenv_does_not_override_real_env_vars(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """CI injects secrets as real env vars; a stale .env must never win."""
-    monkeypatch.setenv("ADZUNA_APP_ID", "from-ci")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "from-ci")
     env = tmp_path / ".env"
-    env.write_text("ADZUNA_APP_ID=from-file\n", encoding="utf-8")
+    env.write_text("ANTHROPIC_API_KEY=from-file\n", encoding="utf-8")
     _load_dotenv(env)
-    assert ApiKeys.load(env).adzuna_app_id == "from-ci"
+    assert ApiKeys.load(env).anthropic_api_key == "from-ci"
 
 
 def test_dotenv_strips_quotes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("ADZUNA_APP_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     env = tmp_path / ".env"
-    env.write_text('# a comment\nADZUNA_APP_KEY="quoted-value"\n', encoding="utf-8")
+    env.write_text('# a comment\nANTHROPIC_API_KEY="quoted-value"\n', encoding="utf-8")
     _load_dotenv(env)
-    assert ApiKeys.load(env).adzuna_app_key == "quoted-value"
-
-
-def test_has_adzuna_needs_both_keys(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("ADZUNA_APP_KEY", raising=False)
-    assert ApiKeys(adzuna_app_id="only-id").has_adzuna is False
-    assert ApiKeys(adzuna_app_id="id", adzuna_app_key="key").has_adzuna is True
+    assert ApiKeys.load(env).anthropic_api_key == "quoted-value"

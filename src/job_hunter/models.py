@@ -1,8 +1,8 @@
 """The core data structures the whole pipeline passes around.
 
 Everything in job-hunter revolves around one shape: `Job`. Each source adapter
-(Platsbanken, Adzuna) converts its own API response into a list of `Job`
-objects, so the rest of the code never has to care where a job came from.
+converts its own results into a list of `Job` objects, so the rest of the code
+never has to care where a job came from.
 
 We use pydantic's `BaseModel`: we declare the fields and their types, and
 pydantic validates incoming data and gives us clean attribute access
@@ -30,7 +30,7 @@ class Job(BaseModel):
     """One normalized job posting, shared across all sources and the ML layer."""
 
     # --- where it came from ---
-    source: str  # "platsbanken" | "adzuna"
+    source: str  # "platsbanken" | "linkedin" | "indeed" | "google"
     source_id: str  # the id this source assigned the posting
 
     # --- the posting itself ---
