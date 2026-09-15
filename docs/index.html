@@ -72,6 +72,17 @@
     @media (prefers-color-scheme: dark) {
       .badge-exp.stretch { color: #fbbf24; border-color: #b45309; background: #78350f33; }
     }
+    /* Consultancy/staffing flag — informational, not a filter: these are still
+       shown (just penalized in scoring), this just saves you reading the ad
+       to find out why. */
+    .badge-consultancy {
+      display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 999px;
+      font-size: 11px; font-weight: 700; vertical-align: middle;
+      color: #6d28d9; border: 1px solid #a78bfa; background: #ede9fe;
+    }
+    @media (prefers-color-scheme: dark) {
+      .badge-consultancy { color: #c4b5fd; border-color: #6d28d9; background: #4c1d9533; }
+    }
     .fb { display: inline-flex; gap: 4px; }
     .fb button { padding: 4px 8px; font-size: 15px; line-height: 1; }
     .fb button.up.active { background: var(--up); border-color: var(--up); color: #fff; }
@@ -134,17 +145,20 @@
       return isNaN(d) ? "—" : d.toISOString().slice(0, 10);
     }
 
-    // Years you can credibly claim — mirrors ranking.max_years_experience in
-    // config.yaml. Ads asking for more get an amber badge; they're already
-    // scored down by the ranker, but they stay on the list on purpose.
-    const MAX_YEARS = 2;
-
-    function expBadge(years) {
+    // Whether years_required is a stretch is computed server-side (rank.py) —
+    // it accounts for per-role exceptions (e.g. NLP roles have no cap at all)
+    // that a flat client-side threshold couldn't express correctly.
+    function expBadge(years, stretch) {
       if (years == null) return "";
-      const stretch = years > MAX_YEARS ? " stretch" : "";
+      const cls = stretch ? " stretch" : "";
       const hint = stretch ? `asks for ${years} years — a stretch, but worth a look`
                            : `asks for ${years} years — within reach`;
-      return `<span class="badge-exp${stretch}" title="${hint}">${years}y</span>`;
+      return `<span class="badge-exp${cls}" title="${hint}">${years}y</span>`;
+    }
+
+    function consultancyBadge(isConsultancy) {
+      if (!isConsultancy) return "";
+      return `<span class="badge-consultancy" title="Reads as a consultancy/staffing company or role — scored down, not hidden">consultant</span>`;
     }
 
     function passesFilters(job) {
@@ -186,12 +200,13 @@
         const tr = document.createElement("tr");
         const reasons = (job.score_reasons || []).join(" · ") || "no scoring reasons";
         const label = fbGet(job.job_key);
-        const exp = expBadge(job.years_required);
+        const exp = expBadge(job.years_required, job.experience_stretch);
+        const consultancy = consultancyBadge(job.is_consultancy);
         tr.innerHTML = `
           <td><span class="score" title="${escapeHtml(reasons)}">${Math.round(job.score)}</span></td>
           <td class="sig">${job.keyword_norm == null ? "—" : Math.round(job.keyword_norm)}</td>
           <td class="sig">${job.semantic_norm == null ? "—" : Math.round(job.semantic_norm)}</td>
-          <td class="title"><a href="${escapeAttr(job.url)}" target="_blank" rel="noopener">${escapeHtml(job.title)}</a>${job.is_new ? '<span class="badge-new">NEW</span>' : ""}${exp}</td>
+          <td class="title"><a href="${escapeAttr(job.url)}" target="_blank" rel="noopener">${escapeHtml(job.title)}</a>${job.is_new ? '<span class="badge-new">NEW</span>' : ""}${exp}${consultancy}</td>
           <td class="company">${escapeHtml(job.company)}</td>
           <td class="loc">${escapeHtml(job.location) || "—"}</td>
           <td class="src">${escapeHtml(job.source)}</td>

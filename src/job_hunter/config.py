@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, Field
@@ -89,9 +90,32 @@ class PlatsbankenSource(BaseModel):
     limit: int = 100  # results per query (JobTech caps a single request at 100)
 
 
+JobspySite = Literal["linkedin", "indeed", "google", "glassdoor"]
+
+
+def _default_jobspy_sites() -> list[JobspySite]:
+    return ["linkedin", "indeed"]
+
+
+class JobspySource(BaseModel):
+    model_config = {"extra": "forbid"}
+    # "google" and "glassdoor" are accepted here for forward-compatibility but
+    # not in the default list: as of jobspy 1.1.82, Google Jobs' scraper is
+    # broken upstream (returns 0 results even on its own documented examples —
+    # see https://github.com/speedyapply/JobSpy/issues/302) and Glassdoor has
+    # no Sweden domain mapping (every call raises). Both confirmed by testing
+    # against the real installed package, not just its docs.
+    sites: list[JobspySite] = Field(default_factory=_default_jobspy_sites)
+    results_wanted: int = 20  # per (site, query) call — keep modest, see jobspy_source.py
+    hours_old: int | None = 72  # freshness filter; also caps request volume
+    country_indeed: str = "Sweden"  # jobspy defaults this to "usa" if unset
+    location: str = "Sweden"
+
+
 class Sources(BaseModel):
     model_config = {"extra": "forbid"}
     platsbanken: PlatsbankenSource = Field(default_factory=PlatsbankenSource)
+    jobspy: JobspySource = Field(default_factory=JobspySource)
 
 
 class Config(BaseModel):

@@ -17,9 +17,14 @@ from datetime import UTC, datetime
 from functools import lru_cache
 
 from .config import Blend, Config
-from .experience import required_years, seniority_gap
+from .experience import looks_like_nlp_role, required_years, seniority_gap
 from .language import requires_swedish
 from .models import Job
+
+# Terms that flag a consultancy/staffing role. Matched anywhere in title,
+# description, or company name (a company literally named "... Consulting AB"
+# counts even if the ad text itself never uses the word).
+_CONSULTANCY_TERMS = ("consultant", "consulting")
 
 # How many points a fresh-vs-old posting and a location match are worth.
 RECENCY_MAX = 10.0
@@ -58,8 +63,11 @@ def rank(jobs: list[Job], config: Config) -> list[Job]:
         if ranking.location_filter and _wrong_location(job, config):
             continue
         job.years_required = required_years(f"{job.title} {job.description}")
-        if _experience_gap(job, config) and ranking.drop_over_experience:
+        gap = _experience_gap(job, config)
+        if gap and ranking.drop_over_experience:
             continue
+        job.experience_stretch = gap > 0
+        job.is_consultancy = _is_consultancy(job)
         job.keyword_score = _keyword_score(job, config)  # also fills score_reasons
         kept.append(job)
 
@@ -126,13 +134,16 @@ def _blend(job: Job, blend: Blend) -> float:
 
 
 def _experience_gap(job: Job, config: Config) -> int:
-    """Years demanded beyond what you have (0 when within reach or disabled).
+    """Years demanded beyond what you have (0 when within reach, disabled, or
+    the role is NLP-focused — those are exempt from this cap entirely).
 
     `max_years_experience: 0` turns the whole thing off, matching how
     `max_age_days: 0` disables the age cutoff.
     """
     max_years = config.ranking.max_years_experience
     if max_years <= 0:
+        return 0
+    if looks_like_nlp_role(f"{job.title} {job.description}"):
         return 0
     return seniority_gap(job.years_required, max_years)
 
@@ -172,14 +183,28 @@ def _searchable_text(job: Job) -> tuple[str, str]:
     return title, body
 
 
+def _full_haystack(job: Job) -> str:
+    """Title + description + location + company, lowercased, all in one string.
+
+    Company name is included so a term like "consulting" also catches
+    consultancy firms by name, not just ads that use the word in their text.
+    """
+    title, body = _searchable_text(job)
+    return f"{title} {body} {job.company.lower()}"
+
+
+def _is_consultancy(job: Job) -> bool:
+    """True if the ad or company reads as a consultancy/staffing role."""
+    haystack = _full_haystack(job)
+    return any(_contains(term, haystack) for term in _CONSULTANCY_TERMS)
+
+
 def _is_excluded(job: Job, config: Config) -> bool:
     """Drop rules: excluded term anywhere, excluded term in the title, or no
     required term present."""
     ranking = config.ranking
-    title, body = _searchable_text(job)
-    # Company name is included here so excluding "consulting" also drops
-    # consultancy firms, not just ads that use the word in their description.
-    haystack = f"{title} {body} {job.company.lower()}"
+    title, _ = _searchable_text(job)
+    haystack = _full_haystack(job)
     # Title-only exclusion — the right tool for seniority filtering.
     if any(_contains(term, title) for term in ranking.excluded_titles):
         return True
@@ -208,8 +233,9 @@ def _keyword_score(job: Job, config: Config) -> float:
             score += weight
             reasons.append(f"{term} +{weight:g}")
 
-    # Negative terms: subtract wherever they appear.
-    haystack = f"{title} {body}"
+    # Negative terms: subtract wherever they appear (title, description, or
+    # company name — see _full_haystack).
+    haystack = _full_haystack(job)
     for term, weight in ranking.negative.items():
         if _contains(term, haystack):
             score -= weight

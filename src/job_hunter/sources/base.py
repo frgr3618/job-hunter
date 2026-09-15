@@ -1,9 +1,13 @@
-"""Shared, 'safe by construction' HTTP layer for all sources.
+"""Shared, 'safe by construction' HTTP layer for JSON-API sources.
 
-Even though we only call well-behaved public APIs, we still want to be a polite
-network citizen: identify ourselves, use sane timeouts, back off and retry on
+Used by adapters that call a well-behaved public JSON API directly (currently
+just Platsbanken): identify ourselves, use sane timeouts, back off and retry on
 transient errors, and honor the server's `Retry-After` when rate-limited. Doing
-this once here keeps every adapter simple and consistent.
+this once here keeps every such adapter simple and consistent.
+
+Scraping-based adapters (e.g. `jobspy_source.py`) manage their own HTTP
+end-to-end via their underlying library and don't use `build_client`/
+`get_json` — only the `Source` ABC below is shared by every adapter.
 """
 
 from __future__ import annotations

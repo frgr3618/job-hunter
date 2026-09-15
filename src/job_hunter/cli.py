@@ -17,7 +17,7 @@ from .pipeline import run as run_pipeline
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="job-hunter",
-        description="Automated, ToS-compliant Swedish job aggregator + ML ranking.",
+        description="Automated Swedish job aggregator + ML ranking.",
     )
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="show detailed progress logs"

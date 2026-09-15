@@ -63,6 +63,12 @@ class Job(BaseModel):
     # Years of experience the ad asks for, extracted from its text (None = unstated).
     # Shown in the viewer so you can judge the stretch yourself.
     years_required: int | None = None
+    # True if years_required exceeds what's allowed for this job's role (NLP
+    # roles are exempt) — the viewer uses this instead of re-deriving the cap.
+    experience_stretch: bool = False
+    # True if the ad or company reads as a consultancy/staffing role — no longer
+    # excluded outright, just penalized and flagged for a second look.
+    is_consultancy: bool = False
     skills: list[str] = Field(default_factory=list)  # extracted skill tags
     fit_summary: str | None = None  # optional LLM fit/gap note
 

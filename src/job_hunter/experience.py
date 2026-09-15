@@ -70,3 +70,20 @@ def seniority_gap(years_required: int | None, max_years: int) -> int:
     if years_required is None or max_years < 0:
         return 0
     return max(0, years_required - max_years)
+
+
+# NLP-focused roles are exempt from the years-of-experience cap entirely (a
+# deliberate exception, not covered by max_years_experience). Matched on the
+# ad's own text rather than which search query found it, since a job can match
+# more than one query and dedup keeps only one copy either way.
+_NLP_HINTS = ("nlp", "natural language processing")
+_NLP_PATTERNS = {
+    phrase: re.compile(rf"(?<![a-z0-9]){re.escape(phrase)}(?![a-z0-9])")
+    for phrase in _NLP_HINTS
+}
+
+
+def looks_like_nlp_role(text: str) -> bool:
+    """True if the ad reads as an NLP-focused role."""
+    lowered = text.lower()
+    return any(pattern.search(lowered) for pattern in _NLP_PATTERNS.values())

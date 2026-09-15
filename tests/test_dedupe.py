@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from conftest import make_job
 from job_hunter.dedupe import (
@@ -45,7 +45,9 @@ def test_merge_keeps_the_better_signals_from_the_loser() -> None:
     (winner,) = dedupe([rich, sparse])
     assert winner.remote is True
     assert winner.salary == "45000 SEK"
-    assert winner.posted_at == datetime(2026, 8, 1)  # earliest known posting date
+    # earliest known posting date — naive inputs come back normalized to UTC
+    # (see dedupe._earliest), since sources don't all attach tzinfo the same way.
+    assert winner.posted_at == datetime(2026, 8, 1, tzinfo=UTC)
 
 
 def test_distinct_jobs_survive() -> None:

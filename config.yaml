@@ -39,21 +39,22 @@ ranking:
     mlops: 8
     nlp: 8
     remote: 6
-  # Terms that lower the keyword score (weight subtracted).
-  # (senior/lead moved to excluded_titles; consultant/consulting moved to
-  #  excluded below since you want them dropped entirely.)
+  # Terms that lower the keyword score (weight subtracted), matched in title,
+  # description, OR company name. (senior/lead moved to excluded_titles;
+  # consultant/consulting are penalized, not dropped — still shown, just
+  # pushed down, and flagged with a "consultant" badge in the viewer.)
   negative:
     php: 20
     ".net": 15
+    consultant: 20
+    consulting: 20
   # If non-empty, a job must contain at least one of these to survive.
   required: []
   # A job is dropped if any of these appear in the title, description, OR company
-  # name. (So "consulting" here drops consultancy firms too.)
+  # name.
   excluded:
     - internship
     - praktik        # Swedish for "internship"
-    - consultant
-    - consulting
   # Drop ads that REQUIRE Swedish. Ads merely written in Swedish are kept — if
   # they never demand the language you can still apply, and those ads get far
   # fewer international applicants. "Svenska är meriterande" is a plus, not a
@@ -66,7 +67,9 @@ ranking:
   # not hidden — you thumbed up roles asking for 3 and 5 years, so hiding them
   # would have cost you jobs you wanted. Set drop_over_experience: true to hide
   # them instead. 0 disables this entirely.
-  max_years_experience: 2
+  # NLP-focused roles are exempt from this cap entirely (see rank.py /
+  # experience.py's looks_like_nlp_role) — they're never penalized for years asked.
+  max_years_experience: 3
   experience_penalty: 8      # points off per extra year demanded
   drop_over_experience: false
   # A job is dropped if any of these appear in its TITLE (level filtering).
@@ -79,7 +82,7 @@ ranking:
   # Linear recency boost applied within this many days of posting.
   recency_days: 30
   # Hard cutoff: drop any posting older than this many days (0 = keep all ages).
-  max_age_days: 45   # ~1.5 months
+  max_age_days: 30
   # Boost applied to remote roles.
   remote_boost: 10
 
@@ -87,3 +90,11 @@ ranking:
 sources:
   platsbanken:
     limit: 100       # results per query (max 100 per JobTech request)
+  jobspy:
+    # google/glassdoor excluded: google's jobspy scraper is currently broken
+    # upstream, glassdoor has no Sweden support in jobspy. See jobspy_source.py.
+    sites: [linkedin, indeed]
+    results_wanted: 20   # per (site, query) call — kept modest, see jobspy_source.py
+    hours_old: 72         # only scrape postings from the last 3 days
+    country_indeed: "Sweden"
+    location: "Sweden"

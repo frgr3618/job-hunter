@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from job_hunter.experience import required_years, seniority_gap
+from job_hunter.experience import looks_like_nlp_role, required_years, seniority_gap
 
 
 @pytest.mark.parametrize(
@@ -75,3 +75,30 @@ def test_gap_counts_only_the_excess() -> None:
 def test_unstated_requirement_is_no_gap() -> None:
     """Silence isn't a barrier — plenty of junior-friendly ads never say."""
     assert seniority_gap(None, 2) == 0
+
+
+# --- NLP role detection --------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "NLP Engineer",
+        "Join our Natural Language Processing team",
+        "We're hiring an nlp specialist",
+    ],
+)
+def test_nlp_role_is_detected(text: str) -> None:
+    assert looks_like_nlp_role(text) is True
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Machine Learning Engineer",
+        "Data Scientist",
+        "",
+    ],
+)
+def test_non_nlp_role_is_not_detected(text: str) -> None:
+    assert looks_like_nlp_role(text) is False

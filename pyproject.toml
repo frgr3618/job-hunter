@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "job-hunter"
 version = "0.1.0"
-description = "Automated, ToS-compliant job aggregator + ML relevance ranking for the Swedish job market"
+description = "Automated job aggregator + ML relevance ranking for the Swedish job market"
 readme = "README.md"
 requires-python = ">=3.13"
 license = { text = "MIT" }

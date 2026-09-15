@@ -11,7 +11,7 @@ Two responsibilities:
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 from .models import Job
@@ -42,8 +42,14 @@ def dedupe(jobs: list[Job]) -> list[Job]:
 
 
 def _earliest(a: datetime | None, b: datetime | None) -> datetime | None:
-    """Return the earlier of two datetimes, ignoring any that are None."""
-    dates = [d for d in (a, b) if d is not None]
+    """Return the earlier of two datetimes, ignoring any that are None.
+
+    Sources don't all attach timezone info the same way (e.g. Platsbanken's
+    are naive Swedish-local times, jobspy's are UTC-aware) — normalize before
+    comparing, or `min()` raises. Matches the same convention rank.py already
+    uses for age/recency comparisons.
+    """
+    dates = [d if d.tzinfo else d.replace(tzinfo=UTC) for d in (a, b) if d is not None]
     return min(dates) if dates else None
 
 

@@ -70,7 +70,18 @@ def test_wrong_type_is_rejected(tmp_path: Path) -> None:
 def test_shipped_config_is_valid() -> None:
     """The real config.yaml in the repo must always load — if this fails, the
     nightly scrape is already broken."""
-    assert Config.load(Path("config.yaml")).queries
+    config = Config.load(Path("config.yaml"))
+    assert config.queries
+    # google/glassdoor are broken/unsupported for Sweden in jobspy right now
+    # (see sources/jobspy_source.py) — the shipped default must not include them.
+    assert config.sources.jobspy.sites == ["linkedin", "indeed"]
+    # consultant/consulting are a soft penalty now, not a hard exclude.
+    assert "consultant" not in config.ranking.excluded
+    assert "consulting" not in config.ranking.excluded
+    assert config.ranking.negative["consultant"] == 20
+    assert config.ranking.negative["consulting"] == 20
+    assert config.ranking.max_age_days == 30
+    assert config.ranking.max_years_experience == 3
 
 
 # --- .env handling -----------------------------------------------------------

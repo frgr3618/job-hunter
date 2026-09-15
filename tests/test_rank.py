@@ -42,6 +42,41 @@ def test_excluded_term_matches_the_company_name() -> None:
     assert rank(jobs, cfg(excluded=["consulting"])) == []
 
 
+def test_consultancy_term_no_longer_drops_the_job() -> None:
+    """consultant/consulting used to be a hard exclude; now it's a soft penalty
+    only — the job must survive filtering."""
+    jobs = [make_job(description="We are a leading IT consulting firm.")]
+    assert len(rank(jobs, cfg(negative={"consulting": 20}))) == 1
+
+
+def test_consultancy_term_is_penalized() -> None:
+    job = make_job(description="Looking for a data consultant.")
+    ranked = rank([job], cfg(negative={"consultant": 20}))
+    assert ranked[0].keyword_score == 0
+    assert "consultant -20" in ranked[0].score_reasons
+
+
+def test_consultancy_flag_set_from_description() -> None:
+    job = make_job(description="Looking for a data consultant.")
+    ranked = rank([job], cfg())
+    assert ranked[0].is_consultancy is True
+
+
+def test_consultancy_flag_matches_company_name() -> None:
+    """Flag a consultancy by company name too, same as the old excluded-term
+    behaviour — an ad whose text never says "consulting" but whose employer
+    is one should still be flagged."""
+    job = make_job(company="Nordic Consulting AB", description="We build things.")
+    ranked = rank([job], cfg())
+    assert ranked[0].is_consultancy is True
+
+
+def test_non_consultancy_flag_is_false() -> None:
+    job = make_job(company="Acme AB", description="We build things.")
+    ranked = rank([job], cfg())
+    assert ranked[0].is_consultancy is False
+
+
 def test_required_term_missing_drops_the_job() -> None:
     jobs = [make_job(description="We use Java and Spring.")]
     assert rank(jobs, cfg(required=["python"])) == []
@@ -363,3 +398,26 @@ def test_hard_drop_is_opt_in() -> None:
     jobs = [make_job(description=TOO_SENIOR)]
     assert len(rank(jobs, cfg(max_years_experience=2))) == 1
     assert rank(jobs, cfg(max_years_experience=2, drop_over_experience=True)) == []
+
+
+def test_experience_stretch_flag_true_when_over_cap() -> None:
+    """The viewer's amber badge reads this flag instead of re-deriving the cap
+    client-side — it must be set whenever the ad asks for more than allowed."""
+    ranked = rank([make_job(description=TOO_SENIOR)], cfg(max_years_experience=2))
+    assert ranked[0].experience_stretch is True
+
+
+def test_experience_stretch_flag_false_when_within_cap() -> None:
+    ranked = rank([make_job(description=JUNIOR_OK)], cfg(max_years_experience=2))
+    assert ranked[0].experience_stretch is False
+
+
+def test_nlp_role_is_exempt_from_the_experience_cap() -> None:
+    """The one deliberate exception: NLP roles are never penalized or flagged
+    for years asked, no matter how many years the ad demands."""
+    job = make_job(title="NLP Engineer", description=TOO_SENIOR)
+    ranked = rank([job], cfg(max_years_experience=2, experience_penalty=8))
+    assert ranked[0].years_required == 5  # still recorded, just not penalized
+    assert ranked[0].experience_stretch is False
+    assert ranked[0].keyword_score == 0
+    assert not any("exp" in r for r in ranked[0].score_reasons)

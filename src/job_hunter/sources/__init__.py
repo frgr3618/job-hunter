@@ -8,10 +8,12 @@ pipeline (and the `--source` CLI flag) can look them up by name.
 from __future__ import annotations
 
 from .base import Source
+from .jobspy_source import Jobspy
 from .platsbanken import Platsbanken
 
 SOURCES: dict[str, Source] = {
     Platsbanken.name: Platsbanken(),
+    Jobspy.name: Jobspy(),
 }
 
 __all__ = ["SOURCES", "Source"]
