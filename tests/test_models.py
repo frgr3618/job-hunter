@@ -24,8 +24,8 @@ def test_different_companies_do_not_collide() -> None:
 
 
 def test_job_key_is_serialized() -> None:
-    """The web viewer keys thumbs-up/down feedback off job_key, so it must be
-    present in jobs.json — not just on the Python object."""
+    """job_key is each job's stable ID in jobs.json, so it must be present
+    there — not just on the Python object."""
     assert "job_key" in make_job().model_dump(mode="json")
 
 

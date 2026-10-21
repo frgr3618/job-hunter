@@ -63,11 +63,12 @@ class Job(BaseModel):
     # Years of experience the ad asks for, extracted from its text (None = unstated).
     # Shown in the viewer so you can judge the stretch yourself.
     years_required: int | None = None
-    # True if years_required exceeds what's allowed for this job's role (NLP
-    # roles are exempt) — the viewer uses this instead of re-deriving the cap.
+    # True if years_required exceeds max_years_experience — the viewer uses this
+    # instead of re-deriving the cap. (With drop_over_experience on, such jobs
+    # are removed, so this only shows up when that setting is off.)
     experience_stretch: bool = False
-    # True if the ad or company reads as a consultancy/staffing role — no longer
-    # excluded outright, just penalized and flagged for a second look.
+    # True if the ad or company reads as a consultancy/staffing role — shown and
+    # scored like any other job, only tagged in the viewer for information.
     is_consultancy: bool = False
     skills: list[str] = Field(default_factory=list)  # extracted skill tags
     fit_summary: str | None = None  # optional LLM fit/gap note
@@ -78,7 +79,7 @@ class Job(BaseModel):
         """Identity used for dedupe and 'new since last run' tracking.
 
         Declared as a computed_field (not a plain property) so it's included in
-        model_dump()/jobs.json — the web viewer keys 👍/👎 feedback off it.
+        model_dump()/jobs.json, so each job there carries a stable ID.
 
         Two postings of the same role at the same company collapse to one key,
         even across sources or with minor whitespace/casing differences.

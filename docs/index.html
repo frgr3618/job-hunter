@@ -8,13 +8,13 @@
     :root {
       --bg: #f7f8fa; --panel: #ffffff; --text: #1a1d21; --muted: #666e7a;
       --border: #e3e6ea; --accent: #2f6df6; --new: #0a8f5b; --new-bg: #e3f6ec;
-      --up: #0a8f5b; --down: #d64545; --shadow: 0 1px 3px rgba(0,0,0,.06);
+      --shadow: 0 1px 3px rgba(0,0,0,.06);
     }
     @media (prefers-color-scheme: dark) {
       :root {
         --bg: #14171c; --panel: #1c2027; --text: #e6e9ee; --muted: #98a1ad;
         --border: #2b313a; --accent: #5b8bff; --new: #35d08a; --new-bg: #123626;
-        --up: #35d08a; --down: #f2726f; --shadow: 0 1px 3px rgba(0,0,0,.3);
+        --shadow: 0 1px 3px rgba(0,0,0,.3);
       }
     }
     * { box-sizing: border-box; }
@@ -38,11 +38,6 @@
     }
     input[type=search] { flex: 1; min-width: 180px; }
     label.toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
-    button {
-      padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;
-      background: var(--bg); color: var(--text); font-size: 14px; cursor: pointer;
-    }
-    button:hover { border-color: var(--accent); }
     main { padding: 16px 24px 60px; }
     .wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); }
     table { width: 100%; border-collapse: collapse; background: var(--panel); }
@@ -62,7 +57,7 @@
       vertical-align: middle;
     }
     /* Years of experience the ad asks for. Amber once it's above what you can
-       claim — a nudge, not a wall: these roles are still worth a look. */
+       claim (only seen if drop_over_experience is turned off in config.yaml). */
     .badge-exp {
       display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 999px;
       font-size: 11px; font-weight: 700; vertical-align: middle;
@@ -72,9 +67,8 @@
     @media (prefers-color-scheme: dark) {
       .badge-exp.stretch { color: #fbbf24; border-color: #b45309; background: #78350f33; }
     }
-    /* Consultancy/staffing flag — informational, not a filter: these are still
-       shown (just penalized in scoring), this just saves you reading the ad
-       to find out why. */
+    /* Consultancy/staffing flag — information only: these are shown and scored
+       like any other job, this just saves you reading the ad to find out. */
     .badge-consultancy {
       display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 999px;
       font-size: 11px; font-weight: 700; vertical-align: middle;
@@ -83,10 +77,6 @@
     @media (prefers-color-scheme: dark) {
       .badge-consultancy { color: #c4b5fd; border-color: #6d28d9; background: #4c1d9533; }
     }
-    .fb { display: inline-flex; gap: 4px; }
-    .fb button { padding: 4px 8px; font-size: 15px; line-height: 1; }
-    .fb button.up.active { background: var(--up); border-color: var(--up); color: #fff; }
-    .fb button.down.active { background: var(--down); border-color: var(--down); color: #fff; }
     .empty { padding: 40px; text-align: center; color: var(--muted); }
     .count { font-size: 13px; color: var(--muted); margin: 10px 2px; }
   </style>
@@ -99,7 +89,6 @@
       <input type="search" id="q" placeholder="Filter by title, company, location…" aria-label="Filter jobs" />
       <select id="source" aria-label="Filter by source"><option value="">All sources</option></select>
       <label class="toggle"><input type="checkbox" id="newonly" /> New only</label>
-      <button id="export" title="Download your 👍/👎 as a CSV to commit for training">Export feedback</button>
     </div>
   </header>
   <main>
@@ -116,7 +105,6 @@
             <th data-key="location">Location</th>
             <th data-key="source">Source</th>
             <th data-key="posted_at">Posted</th>
-            <th>Fit</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
@@ -126,18 +114,10 @@
   </main>
 
   <script>
-    const FB_PREFIX = "jobfb:";          // localStorage key prefix for feedback
     let jobs = [];                        // all jobs from jobs.json
     let sort = { key: "score", dir: -1 }; // current sort (dir: 1 asc, -1 desc)
 
     const $ = (id) => document.getElementById(id);
-
-    function fbGet(key) { return localStorage.getItem(FB_PREFIX + key); }
-    function fbSet(key, label) {
-      const cur = fbGet(key);
-      if (cur === label) localStorage.removeItem(FB_PREFIX + key); // toggle off
-      else localStorage.setItem(FB_PREFIX + key, label);
-    }
 
     function fmtDate(iso) {
       if (!iso) return "—";
@@ -145,9 +125,8 @@
       return isNaN(d) ? "—" : d.toISOString().slice(0, 10);
     }
 
-    // Whether years_required is a stretch is computed server-side (rank.py) —
-    // it accounts for per-role exceptions (e.g. NLP roles have no cap at all)
-    // that a flat client-side threshold couldn't express correctly.
+    // Whether years_required is a stretch is computed server-side (rank.py),
+    // so the cap lives in one place: config.yaml's max_years_experience.
     function expBadge(years, stretch) {
       if (years == null) return "";
       const cls = stretch ? " stretch" : "";
@@ -158,7 +137,7 @@
 
     function consultancyBadge(isConsultancy) {
       if (!isConsultancy) return "";
-      return `<span class="badge-consultancy" title="Reads as a consultancy/staffing company or role — scored down, not hidden">consultant</span>`;
+      return `<span class="badge-consultancy" title="Reads as a consultancy/staffing company or role (info only, not scored)">consultant</span>`;
     }
 
     function passesFilters(job) {
@@ -199,7 +178,6 @@
       for (const job of rows) {
         const tr = document.createElement("tr");
         const reasons = (job.score_reasons || []).join(" · ") || "no scoring reasons";
-        const label = fbGet(job.job_key);
         const exp = expBadge(job.years_required, job.experience_stretch);
         const consultancy = consultancyBadge(job.is_consultancy);
         tr.innerHTML = `
@@ -210,25 +188,10 @@
           <td class="company">${escapeHtml(job.company)}</td>
           <td class="loc">${escapeHtml(job.location) || "—"}</td>
           <td class="src">${escapeHtml(job.source)}</td>
-          <td class="posted">${fmtDate(job.posted_at)}</td>
-          <td>
-            <span class="fb" data-key="${escapeAttr(job.job_key)}">
-              <button class="up ${label === "1" ? "active" : ""}" title="Good match" aria-label="Thumbs up">👍</button>
-              <button class="down ${label === "0" ? "active" : ""}" title="Not a match" aria-label="Thumbs down">👎</button>
-            </span>
-          </td>`;
+          <td class="posted">${fmtDate(job.posted_at)}</td>`;
         tbody.appendChild(tr);
       }
     }
-
-    // Feedback clicks (event delegation).
-    $("tbody").addEventListener("click", (e) => {
-      const btn = e.target.closest(".fb button");
-      if (!btn) return;
-      const key = btn.parentElement.dataset.key;
-      fbSet(key, btn.classList.contains("up") ? "1" : "0");
-      render();
-    });
 
     // Header sorting.
     document.querySelectorAll("th[data-key]").forEach((th) => {
@@ -245,24 +208,6 @@
 
     ["q", "source", "newonly"].forEach((id) => $(id).addEventListener("input", render));
 
-    // Export feedback as CSV to commit into docs/data/feedback.csv.
-    $("export").addEventListener("click", () => {
-      const rows = [["job_key", "label"]];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k.startsWith(FB_PREFIX)) rows.push([k.slice(FB_PREFIX.length), localStorage.getItem(k)]);
-      }
-      if (rows.length === 1) { alert("No feedback yet — click 👍/👎 on some jobs first."); return; }
-      const csv = rows.map((r) => r.map(csvCell).join(",")).join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "feedback.csv";
-      a.click();
-      URL.revokeObjectURL(a.href);
-    });
-
-    function csvCell(s) { return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }
     function escapeHtml(s) { return String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
     function escapeAttr(s) { return String(s ?? "").replace(/["'&<>]/g, (c) => ({ '"': "&quot;", "'": "&#39;", "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
 

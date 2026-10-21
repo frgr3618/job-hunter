@@ -17,7 +17,7 @@ from datetime import UTC, datetime
 from functools import lru_cache
 
 from .config import Blend, Config
-from .experience import looks_like_nlp_role, required_years, seniority_gap
+from .experience import required_years, seniority_gap
 from .language import requires_swedish
 from .models import Job
 
@@ -25,6 +25,14 @@ from .models import Job
 # description, or company name (a company literally named "... Consulting AB"
 # counts even if the ad text itself never uses the word).
 _CONSULTANCY_TERMS = ("consultant", "consulting")
+
+# Internships are wanted only when paid (his rule, 2026-10-21). Ads rarely say
+# so, and Platsbanken's salary *type* is filled in on every ad, unpaid ones
+# included, so it proves nothing. We trust explicit wording or a real salary
+# text, and an unpaid cue always wins. "LIA" is a vocational-school placement.
+_INTERNSHIP_TERMS = ("internship", "praktik")
+_PAID_TERMS = ("paid internship", "paid traineeship", "betald praktik")
+_UNPAID_TERMS = ("unpaid", "obetald", "lia")
 
 # How many points a fresh-vs-old posting and a location match are worth.
 RECENCY_MAX = 10.0
@@ -53,6 +61,8 @@ def rank(jobs: list[Job], config: Config) -> list[Job]:
     kept: list[Job] = []
     for job in jobs:
         if _is_excluded(job, config):
+            continue
+        if _is_unpaid_internship(job):
             continue
         if _too_old(job, ranking.max_age_days):
             continue
@@ -134,16 +144,13 @@ def _blend(job: Job, blend: Blend) -> float:
 
 
 def _experience_gap(job: Job, config: Config) -> int:
-    """Years demanded beyond what you have (0 when within reach, disabled, or
-    the role is NLP-focused — those are exempt from this cap entirely).
+    """Years demanded beyond what you have (0 when within reach or disabled).
 
     `max_years_experience: 0` turns the whole thing off, matching how
     `max_age_days: 0` disables the age cutoff.
     """
     max_years = config.ranking.max_years_experience
     if max_years <= 0:
-        return 0
-    if looks_like_nlp_role(f"{job.title} {job.description}"):
         return 0
     return seniority_gap(job.years_required, max_years)
 
@@ -199,14 +206,28 @@ def _is_consultancy(job: Job) -> bool:
     return any(_contains(term, haystack) for term in _CONSULTANCY_TERMS)
 
 
+def _is_unpaid_internship(job: Job) -> bool:
+    """True for an internship that doesn't clearly say it is paid."""
+    haystack = _full_haystack(job)
+    if not any(_contains(term, haystack) for term in _INTERNSHIP_TERMS):
+        return False
+    salary = (job.salary or "").lower()
+    if any(_contains(term, f"{haystack} {salary}") for term in _UNPAID_TERMS):
+        return True
+    return not (salary.strip() or any(_contains(term, haystack) for term in _PAID_TERMS))
+
+
 def _is_excluded(job: Job, config: Config) -> bool:
     """Drop rules: excluded term anywhere, excluded term in the title, or no
     required term present."""
     ranking = config.ranking
     title, _ = _searchable_text(job)
     haystack = _full_haystack(job)
-    # Title-only exclusion — the right tool for seniority filtering.
-    if any(_contains(term, title) for term in ranking.excluded_titles):
+    # Title-only exclusion — the right tool for seniority filtering — unless
+    # the title also marks the role as early-career.
+    if any(_contains(term, title) for term in ranking.excluded_titles) and not any(
+        _contains(term, title) for term in ranking.excluded_title_exceptions
+    ):
         return True
     if any(_contains(term, haystack) for term in ranking.excluded):
         return True

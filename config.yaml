@@ -1,19 +1,27 @@
 # Job Hunter configuration.
 # Edit these to match what you're looking for. All fields have sensible defaults.
 
-# Search terms sent to each source (one query per term).
+# Search terms sent to each source (one query per term). Chosen 2026-10-21 from
+# the master CV + live Platsbanken counts. NLP engineer was dropped: no openings
+# in Sweden. "AI-specialist" is how Swedish ads (Nordea, PTS) title AI roles.
 queries:
   - "data scientist"
   - "machine learning engineer"
   - "AI engineer"
-  - "NLP engineer"
+  - "data engineer"
+  - "analytics engineer"
+  - "AI-specialist"
   - "data analyst"
 
 # Preferred locations. Used as a location-match boost.
 # "Remote" is treated specially (matches remote-flagged / remote-mentioning jobs).
+# Gothenburg is listed twice: Platsbanken writes "Göteborg", LinkedIn often
+# "Gothenburg". Suburbs like Mölndal don't contain either name and stay out.
 locations:
   - "Stockholm"
   - "Uppsala"
+  - "Göteborg"
+  - "Gothenburg"
   - "Remote"
 
 # How the final 0-100 score blends the three signals. Weights are renormalized
@@ -38,23 +46,23 @@ ranking:
     pytorch: 8
     mlops: 8
     nlp: 8
+    # Evaluation work lives inside AI/ML ads, not in job titles (2026-10-21).
+    evaluation: 8
+    LLM: 8
     remote: 6
   # Terms that lower the keyword score (weight subtracted), matched in title,
-  # description, OR company name. (senior/lead moved to excluded_titles;
-  # consultant/consulting are penalized, not dropped — still shown, just
-  # pushed down, and flagged with a "consultant" badge in the viewer.)
+  # description, OR company name. (senior/lead moved to excluded_titles.
+  # Consultancies are fine since 2026-10-14: not penalized here, only tagged
+  # "consultant" in the viewer for information.)
   negative:
     php: 20
     ".net": 15
-    consultant: 20
-    consulting: 20
   # If non-empty, a job must contain at least one of these to survive.
   required: []
   # A job is dropped if any of these appear in the title, description, OR company
-  # name.
-  excluded:
-    - internship
-    - praktik        # Swedish for "internship"
+  # name. (Internships are no longer listed here: unpaid ones are dropped by
+  # rank.py's _is_unpaid_internship, paid ones are kept.)
+  excluded: []
   # Drop ads that REQUIRE Swedish. Ads merely written in Swedish are kept — if
   # they never demand the language you can still apply, and those ads get far
   # fewer international applicants. "Svenska är meriterande" is a plus, not a
@@ -63,22 +71,35 @@ ranking:
   # Only show jobs you could actually take: remote, or in `locations` above.
   # ("Stockholms län" contains "Stockholm", so Solna/Södertälje pass too.)
   location_filter: true
-  # Years of experience you can claim. Ads wanting more are pushed DOWN the list,
-  # not hidden — you thumbed up roles asking for 3 and 5 years, so hiding them
-  # would have cost you jobs you wanted. Set drop_over_experience: true to hide
-  # them instead. 0 disables this entirely.
-  # NLP-focused roles are exempt from this cap entirely (see rank.py /
-  # experience.py's looks_like_nlp_role) — they're never penalized for years asked.
+  # Years of experience you can claim. Ads asking for more are REMOVED (his rule,
+  # 2026-10-21: 3 is the max, 4+ is a big no). Ads that state no years are kept.
+  # When an ad names several figures the smallest counts, so "3-5 years" is 3.
+  # Set drop_over_experience: false to only push them down instead
+  # (experience_penalty points per extra year). 0 disables this entirely.
   max_years_experience: 3
-  experience_penalty: 8      # points off per extra year demanded
-  drop_over_experience: false
-  # A job is dropped if any of these appear in its TITLE (level filtering).
+  experience_penalty: 8      # only used when drop_over_experience is false
+  drop_over_experience: true
+  # A job is dropped if any of these appear in its TITLE (level filtering),
+  # whether or not the ad states any years. Whole words only, so Swedish
+  # compounds like "Utvecklingschef" are not caught by "chef".
   excluded_titles:
     - senior
     - lead
     - principal
     - staff
     - "head of"
+    - manager
+    - chef           # Swedish for "manager"
+    - architect
+    - director
+  # ...unless the title also says one of these (e.g. "Product Manager, Early
+  # Career Program" stays).
+  excluded_title_exceptions:
+    - junior
+    - graduate
+    - trainee
+    - "early career"
+    - "entry level"
   # Linear recency boost applied within this many days of posting.
   recency_days: 30
   # Hard cutoff: drop any posting older than this many days (0 = keep all ages).

@@ -7,11 +7,10 @@ Every morning a GitHub Action fetches fresh postings, deduplicates them, scores 
 ## What it does
 
 - **Aggregates** jobs from multiple sources: Platsbanken (Sweden's official public job API) plus LinkedIn and Indeed via [JobSpy](https://github.com/speedyapply/JobSpy). The JobSpy-backed sources scrape rather than use an official API — see [Sources](#sources) below for what that means in practice.
-- **Ranks** each posting 0–100 by blending three signals:
+- **Ranks** each posting 0–100 by blending two signals:
   - a hand-tuned **keyword** score (skills, seniority, location),
-  - a **semantic** score — TF-IDF cosine similarity between the job text and my CV,
-  - a trained **relevance** classifier probability (grows as I label jobs).
-- **Filters** out noise: internships, consultancies, senior/lead titles, ads that require Swedish, and postings older than a cutoff.
+  - a **semantic** score — TF-IDF cosine similarity between the job text and my CV.
+- **Filters** out noise: unpaid internships, senior/lead/manager titles, ads asking for more years of experience than I have, ads that require Swedish, jobs outside my cities, and postings older than a cutoff. Consultancies are kept and tagged.
 - **Flags new** postings since the last run and tracks what's already been seen.
 - **Publishes** results to `docs/data/jobs.json`, served as a searchable page via GitHub Pages.
 
@@ -79,7 +78,7 @@ Open `docs/index.html` in a browser to view the ranked results locally.
 Everything is tunable in [`config.yaml`](config.yaml) — no code changes needed:
 
 - **`queries`** / **`locations`** — what and where to search.
-- **`blend`** — how the keyword / semantic / relevance signals are weighted (auto-renormalized if a signal is unavailable).
+- **`blend`** — how the keyword / semantic signals are weighted (auto-renormalized if a signal is unavailable; the `relevance` weight is reserved for a classifier that isn't built).
 - **`ranking`** — positive/negative keyword weights, excluded titles and terms, `drop_if_swedish_required`, `recency_days`, `max_age_days`, `remote_boost`.
 
 The semantic layer reads your CV from `cv.md` (git-ignored — kept out of the public repo).

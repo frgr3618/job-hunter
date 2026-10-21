@@ -58,6 +58,9 @@ class Ranking(BaseModel):
     # seniority ("senior", "lead") so a junior role that merely mentions a senior
     # colleague in its description isn't wrongly removed.
     excluded_titles: list[str] = Field(default_factory=list)
+    # A title containing any of these is never dropped by `excluded_titles`, so
+    # "Product Manager, Early Career Program" survives a "manager" exclusion.
+    excluded_title_exceptions: list[str] = Field(default_factory=list)
     # If true, drop ads that state Swedish as a requirement. The language the ad
     # is *written* in is ignored — a Swedish-written ad that never demands
     # Swedish is a job you can still take, and those are the least contested.
@@ -67,14 +70,12 @@ class Ranking(BaseModel):
     # no location at all are kept — we don't drop what we can't measure.
     location_filter: bool = False
     # Years of experience you can credibly claim. Ads asking for more are pushed
-    # down by `experience_penalty` points per extra year. 0 disables the whole
-    # thing. This is a penalty, not a filter, because ads overstate what they
-    # need and the good ones are worth stretching for.
+    # down by `experience_penalty` points per extra year, or dropped outright
+    # when `drop_over_experience` is true. 0 disables the whole thing.
     max_years_experience: int = 0
     # Points subtracted per year of experience demanded beyond max_years_experience.
     experience_penalty: float = 8.0
     # Set true to drop over-experienced ads outright instead of demoting them.
-    # Off by default: it hides roles you'd probably still apply for.
     drop_over_experience: bool = False
     # Linear recency boost applied within this many days of posting.
     recency_days: int = 30

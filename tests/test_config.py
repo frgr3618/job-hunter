@@ -75,13 +75,32 @@ def test_shipped_config_is_valid() -> None:
     # google/glassdoor are broken/unsupported for Sweden in jobspy right now
     # (see sources/jobspy_source.py) — the shipped default must not include them.
     assert config.sources.jobspy.sites == ["linkedin", "indeed"]
-    # consultant/consulting are a soft penalty now, not a hard exclude.
+    # Consultancies are fine (his rule since 2026-10-14): neither dropped nor
+    # scored down. The viewer still tags them, for information only.
     assert "consultant" not in config.ranking.excluded
     assert "consulting" not in config.ranking.excluded
-    assert config.ranking.negative["consultant"] == 20
-    assert config.ranking.negative["consulting"] == 20
+    assert "consultant" not in config.ranking.negative
+    assert "consulting" not in config.ranking.negative
     assert config.ranking.max_age_days == 30
     assert config.ranking.max_years_experience == 3
+    # Roles chosen 2026-10-21 from the master CV + live Platsbanken counts.
+    # NLP engineer dropped: no openings in Sweden.
+    assert config.queries == [
+        "data scientist",
+        "machine learning engineer",
+        "AI engineer",
+        "data engineer",
+        "analytics engineer",
+        "AI-specialist",
+        "data analyst",
+    ]
+    # Evaluation shows up inside AI/ML ads rather than as a job title.
+    assert config.ranking.positive["evaluation"] > 0
+    assert config.ranking.positive["LLM"] > 0
+    # Gothenburg added 2026-10-21, under both spellings the sources use.
+    assert {"Stockholm", "Uppsala", "Remote", "Göteborg", "Gothenburg"} <= set(
+        config.locations
+    )
 
 
 # --- .env handling -----------------------------------------------------------

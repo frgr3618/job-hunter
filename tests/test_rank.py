@@ -6,6 +6,7 @@ each morning — so it gets the most coverage.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -26,6 +27,77 @@ def cfg(locations: list[str] | None = None, **ranking: Any) -> Config:
 def test_excluded_title_drops_the_job() -> None:
     jobs = [make_job(title="Senior Data Scientist")]
     assert rank(jobs, cfg(excluded_titles=["senior"])) == []
+
+
+def test_title_exception_overrides_an_excluded_title_word() -> None:
+    """'manager' is excluded, but an early-career programme with 'manager' in
+    its title is exactly the kind of job he wants, so it survives."""
+    rules = cfg(excluded_titles=["manager"], excluded_title_exceptions=["early career"])
+    kept = make_job(title="Product Manager, Early Career Program")
+    dropped = make_job(title="Data Science Manager")
+    assert rank([kept, dropped], rules) == [kept]
+
+
+@pytest.mark.parametrize(
+    ("title", "kept"),
+    [
+        ("Data Science Manager", False),
+        ("Chef för AI och data", False),
+        ("AI Architect", False),
+        ("Director of Data", False),
+        ("Senior Data Scientist", False),
+        ("Product Manager, Early Career Program", True),
+        ("Junior Data Manager", True),
+        ("Data Scientist", True),
+    ],
+)
+def test_shipped_config_title_rules(title: str, kept: bool) -> None:
+    """His rule (2026-10-21): seniority words in the title remove the ad even
+    when no years are stated, unless the title also marks it as early-career."""
+    config = Config.load(Path("config.yaml"))
+    job = make_job(title=title, location="Stockholm")
+    assert (len(rank([job], config)) == 1) is kept
+
+
+@pytest.mark.parametrize(
+    ("title", "description", "salary", "kept"),
+    [
+        ("Data Science Internship", "Join our team.", None, False),
+        ("Data Science Internship", "This is a paid internship.", None, True),
+        ("Praktik inom data", "Betald praktik i sex månader.", None, True),
+        ("Data Science Internship", "Join our team.", "30 000 SEK/month", True),
+        ("Praktik inom AI", "Obetald praktik under våren.", None, False),
+        ("Data Science Internship", "Paid internship.", "Unpaid", False),
+        ("Data Science Internship", "Paid internship, unpaid the first month.", None, False),
+        ("AI-praktik", "LIA-praktik för YH-studenter, betald praktik.", None, False),
+        ("Data Scientist", "Python and SQL.", None, True),  # not an internship
+    ],
+)
+def test_shipped_config_keeps_only_paid_internships(
+    title: str, description: str, salary: str | None, kept: bool
+) -> None:
+    """His rule (2026-10-21): internships only if paid. A paid cue keeps one;
+    an unpaid cue always wins, even when a paid cue is there too."""
+    config = Config.load(Path("config.yaml"))
+    job = make_job(title=title, location="Stockholm", description=description, salary=salary)
+    assert (len(rank([job], config)) == 1) is kept
+
+
+@pytest.mark.parametrize(
+    ("location", "kept"),
+    [
+        ("Göteborg, Västra Götalands län", True),  # Platsbanken style
+        ("Gothenburg, Västra Götaland County, Sweden", True),  # LinkedIn style
+        ("Solna, Stockholms län", True),
+        ("Uppsala", True),
+        ("Mölndal, Västra Götalands län", False),  # known limit: suburb not named
+        ("Malmö, Skåne län", False),
+    ],
+)
+def test_shipped_config_locations(location: str, kept: bool) -> None:
+    config = Config.load(Path("config.yaml"))
+    job = make_job(location=location)
+    assert (len(rank([job], config)) == 1) is kept
 
 
 def test_excluded_title_ignores_the_description() -> None:
@@ -168,8 +240,8 @@ def test_negative_terms_subtract() -> None:
 
 
 def test_score_never_goes_negative() -> None:
-    job = make_job(description="internship unpaid")
-    ranked = rank([job], cfg(negative={"unpaid": 500}))
+    job = make_job(description="legacy php codebase")
+    ranked = rank([job], cfg(negative={"php": 500}))
     assert ranked[0].keyword_score == 0
 
 
@@ -412,12 +484,26 @@ def test_experience_stretch_flag_false_when_within_cap() -> None:
     assert ranked[0].experience_stretch is False
 
 
-def test_nlp_role_is_exempt_from_the_experience_cap() -> None:
-    """The one deliberate exception: NLP roles are never penalized or flagged
-    for years asked, no matter how many years the ad demands."""
+def test_nlp_role_follows_the_same_cap() -> None:
+    """NLP roles used to be exempt from the cap; dropped 2026-10-21 (no NLP
+    openings in Sweden). They are capped like every other role now."""
     job = make_job(title="NLP Engineer", description=TOO_SENIOR)
-    ranked = rank([job], cfg(max_years_experience=2, experience_penalty=8))
-    assert ranked[0].years_required == 5  # still recorded, just not penalized
-    assert ranked[0].experience_stretch is False
-    assert ranked[0].keyword_score == 0
-    assert not any("exp" in r for r in ranked[0].score_reasons)
+    assert rank([job], cfg(max_years_experience=2, drop_over_experience=True)) == []
+
+
+@pytest.mark.parametrize(
+    ("description", "kept"),
+    [
+        ("At least 4 years of experience with Python.", False),
+        ("3 years of experience with Python.", True),
+        ("3+ years of experience with Python.", True),
+        ("You know Python.", True),  # no years stated: not a reason to drop
+    ],
+)
+def test_shipped_config_drops_ads_asking_more_than_3_years(
+    description: str, kept: bool
+) -> None:
+    """His rule (2026-10-21): 3 years is the max, 4+ is removed, not demoted."""
+    config = Config.load(Path("config.yaml"))
+    job = make_job(location="Stockholm", description=description)
+    assert (len(rank([job], config)) == 1) is kept
